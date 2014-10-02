@@ -12,6 +12,7 @@ from sqlalchemy.orm import column_property, relationship
 from sqlalchemy import func
 from sqlalchemy import (
     Column,
+    Boolean,
     String,
     Integer,
     Float,
@@ -75,3 +76,27 @@ class Site(CommonColumns):
     address = relationship("Address", backref=backref("site", uselist=False))
     geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
     geoposition = relationship("Geoposition", backref=backref("geoposition", uselist=False))
+    evaluations = relationship("Evaluation", backref="site")
+
+
+class Evaluation(CommonColumns):
+    __tablename__ = 'evaluation'
+    id  = Column(Integer, primary_key=True, autoincrement=True)
+    evaluator_id = Column(Integer, ForeignKey('evaluator.id'))
+    evaluator = relationship("Evaluator", backref=backref("evaluation", uselist=False))
+    site_id = Column(Integer)
+    sum_rating = Column(Integer)
+    evaluated_when = Column(DateTime)
+    exists = Column(Boolean)# does site exist at time of evaluation
+    comments = Column(String(80))
+    site_id = Column(Integer, ForeignKey('site.id'))
+
+
+class Evaluator(CommonColumns):
+    __tablename__ = 'evaluator'
+    id  = Column(Integer, primary_key=True, autoincrement=True)
+    first_name = Column(String(20))
+    middle_name = Column(String(15))
+    last_name = Column(String(15))
+    email_address = Column(String(40))# need validator either by data type or some other method
+
