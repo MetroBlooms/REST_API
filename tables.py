@@ -17,7 +17,8 @@ from sqlalchemy import (
     Integer,
     Float,
     ForeignKey,
-    DateTime)
+    DateTime,
+    Enum)
 
 Base = declarative_base()
 
@@ -71,19 +72,19 @@ class Geoposition(CommonColumns):
 class Site(CommonColumns):
     __tablename__ = 'site'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    siteName  = Column(String(80))# does site have a formal name
+    site_name  = Column(String(80))# does site have a formal name
     address_id = Column(Integer, ForeignKey('address.id'))
     address = relationship("Address", backref=backref("site", uselist=False))
     geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
     geoposition = relationship("Geoposition", backref=backref("geoposition", uselist=False))
     evaluations = relationship("Evaluation", backref="site")
-
+    site_maintainers = relationship("SiteMaintainer", backref="site")
 
 class Evaluation(CommonColumns):
     __tablename__ = 'evaluation'
     id  = Column(Integer, primary_key=True, autoincrement=True)
-    evaluator_id = Column(Integer, ForeignKey('evaluator.id'))
-    evaluator = relationship("Evaluator", backref=backref("evaluation", uselist=False))
+    evaluator_id = Column(Integer, ForeignKey('person.id'))
+    evaluator = relationship("Person", backref=backref("evaluation", uselist=False))
     site_id = Column(Integer)
     sum_rating = Column(Integer)
     evaluated_when = Column(DateTime)
@@ -91,12 +92,21 @@ class Evaluation(CommonColumns):
     comments = Column(String(80))
     site_id = Column(Integer, ForeignKey('site.id'))
 
-
-class Evaluator(CommonColumns):
-    __tablename__ = 'evaluator'
-    id  = Column(Integer, primary_key=True, autoincrement=True)
+class Person(CommonColumns):
+    __tablename__ = 'person'
+    id = Column(Integer, primary_key=True, autoincrement=True)
     first_name = Column(String(20))
     middle_name = Column(String(15))
     last_name = Column(String(15))
     email_address = Column(String(40))# need validator either by data type or some other method
+    type = Column(Enum("evaluator", "site maintainer", name = "person_types"))
+    address_id = Column(Integer, ForeignKey('address.id'))
+    address = relationship("Address", backref=backref("person", uselist=False))
+
+class SiteMaintainer(CommonColumns):
+    __tablename__ = 'site_maintainer'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    site_id = Column(Integer, ForeignKey('site.id'))
+    person_id = Column(Integer, ForeignKey('person.id'))
+    person = relationship("Person", backref=backref("site_maintainer", uselist=False))
 
