@@ -7,7 +7,7 @@
 
 """
 from eve.io.sql.decorators import registerSchema
-from tables import Address, Geoposition, Site, Evaluation, Person, SiteMaintainer
+from tables import Address, Geoposition, Site, Evaluation, Person, SiteMaintainer, Phone, Email
 
 registerSchema('address')(Address)
 registerSchema('geoposition')(Geoposition)
@@ -15,6 +15,8 @@ registerSchema('site')(Site)
 registerSchema('evaluation')(Evaluation)
 registerSchema('person')(Person)
 registerSchema('site_maintainer')(SiteMaintainer)
+registerSchema('phone')(Phone)
+registerSchema('email')(Email)
 
 SQLALCHEMY_DATABASE_URI = 'postgres://eve:test_bmp@localhost/test_bmp'
 

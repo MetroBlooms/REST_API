@@ -80,17 +80,18 @@ class Site(CommonColumns):
     evaluations = relationship("Evaluation", backref="site")
     site_maintainers = relationship("SiteMaintainer", backref="site")
 
+
 class Evaluation(CommonColumns):
     __tablename__ = 'evaluation'
     id  = Column(Integer, primary_key=True, autoincrement=True)
     evaluator_id = Column(Integer, ForeignKey('person.id'))
     evaluator = relationship("Person", backref=backref("evaluation", uselist=False))
     site_id = Column(Integer)
-    sum_rating = Column(Integer)
     evaluated_when = Column(DateTime)
     exists = Column(Boolean)# does site exist at time of evaluation
     comments = Column(String(80))
     site_id = Column(Integer, ForeignKey('site.id'))
+
 
 class Person(CommonColumns):
     __tablename__ = 'person'
@@ -98,10 +99,14 @@ class Person(CommonColumns):
     first_name = Column(String(20))
     middle_name = Column(String(15))
     last_name = Column(String(15))
-    email_address = Column(String(40))# need validator either by data type or some other method
-    type = Column(Enum("evaluator", "site maintainer", name = "person_types"))
+    email_id = Column(Integer, ForeignKey('email.id'))
+    email = relationship("Email", backref=backref("person", uselist=False))
     address_id = Column(Integer, ForeignKey('address.id'))
     address = relationship("Address", backref=backref("person", uselist=False))
+    phone_id = Column(Integer, ForeignKey('phone.id'))
+    phone = relationship("Phone", backref=backref("person", uselist=False))
+    type = Column(Enum("evaluator", "site maintainer", name = "person_types"))
+
 
 class SiteMaintainer(CommonColumns):
     __tablename__ = 'site_maintainer'
@@ -110,3 +115,25 @@ class SiteMaintainer(CommonColumns):
     person_id = Column(Integer, ForeignKey('person.id'))
     person = relationship("Person", backref=backref("site_maintainer", uselist=False))
 
+
+class Phone(CommonColumns):
+    __tablename__ = 'phone'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    exchange = Column(String(10))
+    type = Column(Enum("mobile", "business", "home", name = "phone_types"))
+
+
+class Email(CommonColumns):
+    __tablename__ = 'email'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    address = Column(String(80))# need validator
+
+# now the fun begins:
+
+# evaluation instrument items
+class Factor(CommonColumns):
+    __tablename__ = 'factor'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
+    description = Column(String(80))# instrument item description
+    result = Column(String(80))# instrument item value outcome
