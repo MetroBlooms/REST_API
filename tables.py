@@ -52,9 +52,9 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired, BadSignature
 
 
-class User(CommonColumns):
+class User(Base):
     __tablename__ = 'user'
-    login = Column(String, primary_key=True)
+    name = Column(String, primary_key=True)
     roles = relationship("Role", secondary=lambda: user_roles, backref="user")
 
     def generate_auth_token(self, expiration=24*60*60):
@@ -77,12 +77,12 @@ class User(CommonColumns):
         return len(allowed_roles) > 0
 
 
-class Role(CommonColumns):
+class Role(Base):
     __tablename__ = 'role'
     name = Column(String(50), primary_key=True)
 
 
-user_role = Table(
+user_roles = Table(
     'user_roles', Base.metadata,
     Column('user_name', String, ForeignKey('user.name')),
     Column('role_name', String, ForeignKey('role.name'))

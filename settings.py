@@ -7,7 +7,7 @@
 
 """
 from eve.io.sql.decorators import registerSchema
-from tables import Address, Geoposition, Site, Evaluation, Person, SiteMaintainer, Phone, Email, User
+from tables import Address, Geoposition, Site, Evaluation, Person, SiteMaintainer, Phone, Email, User, Role
 
 registerSchema('address')(Address)
 registerSchema('geoposition')(Geoposition)
@@ -18,6 +18,8 @@ registerSchema('site_maintainer')(SiteMaintainer)
 registerSchema('phone')(Phone)
 registerSchema('email')(Email)
 registerSchema('user')(User)
+registerSchema('role')(Role)
+
 
 SQLALCHEMY_DATABASE_URI = 'postgres://eve:test_bmp@localhost/test_bmp'
 
@@ -36,7 +38,8 @@ DOMAIN = {
     'site': Site._eve_schema['site'],
     'evaluation': Evaluation._eve_schema['evaluation'],
     'person': Person._eve_schema['person'],
-    'user': User._eve_schema['user']
+    'user': User._eve_schema['user'],
+    'role': Role._eve_schema['role']
 
     }
 
