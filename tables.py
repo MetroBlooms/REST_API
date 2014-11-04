@@ -5,10 +5,10 @@
 """
 from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship, backref, column_property
 from sqlalchemy.ext import hybrid
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import column_property, relationship
+from sqlalchemy.schema import Table
 from sqlalchemy import func
 from sqlalchemy import (
     Column,
@@ -46,6 +46,47 @@ class CommonColumns(Base):
                 and not a.key in mapper.expired_attributes]
         attrs += [a.__name__ for a in inspect(self.__class__).all_orm_descriptors if a.extension_type is hybrid.HYBRID_PROPERTY]
         return dict([(c, getattr(self, c, None)) for c in attrs])
+
+
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
+from itsdangerous import SignatureExpired, BadSignature
+
+
+class User(CommonColumns):
+    __tablename__ = 'user'
+    login = Column(String, primary_key=True)
+    roles = relationship("Role", secondary=lambda: user_roles, backref="user")
+
+    def generate_auth_token(self, expiration=24*60*60):
+        s = Serializer(SECRET_KEY, expires_in=expiration)
+        return s.dumps({'login': self.login })
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(SECRET_KEY)
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None # valid token, but expired
+        except BadSignature:
+            return None # invalid token
+        return data['login']
+
+    def isAuthorized(self, role_names):
+        allowed_roles = set([r.id for r in self.roles]).intersection(set(role_names))
+        return len(allowed_roles) > 0
+
+
+class Role(CommonColumns):
+    __tablename__ = 'role'
+    name = Column(String(50), primary_key=True)
+
+
+user_role = Table(
+    'user_roles', Base.metadata,
+    Column('user_name', String, ForeignKey('user.name')),
+    Column('role_name', String, ForeignKey('role.name'))
+)
 
 
 class Address(CommonColumns):

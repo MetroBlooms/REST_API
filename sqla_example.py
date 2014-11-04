@@ -8,6 +8,13 @@ app = Eve(validator=ValidatorSQL, data=SQL)
 db = app.data.driver
 Base.metadata.bind = db.engine
 db.Model = Base
+
+user_role = Table(
+    'user_role', db.metadata,
+    Column('user_name', String, ForeignKey('user.name')),
+    Column('role_name', String, ForeignKey('role.name'))
+)
+
 db.create_all()
 
 # Insert some example data in the db
