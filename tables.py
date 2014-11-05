@@ -54,7 +54,7 @@ from itsdangerous import SignatureExpired, BadSignature
 
 class User(Base):
     __tablename__ = 'user'
-    name = Column(String, primary_key=True)
+    login = Column(String, primary_key=True)
     roles = relationship("Role", secondary=lambda: user_roles, backref="user")
 
     def generate_auth_token(self, expiration=24*60*60):
@@ -84,7 +84,7 @@ class Role(Base):
 
 user_roles = Table(
     'user_roles', Base.metadata,
-    Column('user_name', String, ForeignKey('user.name')),
+    Column('user_name', String, ForeignKey('user.login')),
     Column('role_name', String, ForeignKey('role.name'))
 )
 
