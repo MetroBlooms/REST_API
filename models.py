@@ -1,40 +1,10 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
-
-
-# Create db connection to postgres
-from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
-
-from flask.ext.admin import Admin
-from flask.ext.admin.contrib.sqla import ModelView
-from flask.ext.admin.contrib import sqla
-
-
-# Create application
-app = Flask(__name__)
-
-
-# Create dummy secrey key so we can use sessions
-app.config['SECRET_KEY'] = '123456790'
-
-# Create db connection to postgres
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://test:test@localhost/test'
-app.config['SQLALCHEMY_ECHO'] = True
-db = SQLAlchemy(app)
-
-Base = declarative_base()
-Base.metadata.bind = db.engine
-db.Model = Base
-
-
 """
     SQL tables.
     This is a typical declarative usage of sqlalchemy,
     It has no dependency on flask or eve itself. Pure sqlalchemy.
 """
-
+from app import db
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref, column_property
@@ -52,6 +22,9 @@ from sqlalchemy import (
     DateTime,
     Enum)
 
+Base = declarative_base()
+Base.metadata.bind = db.engine
+db.Model = Base
 
 
 class CommonColumns(Base):
@@ -83,7 +56,7 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from itsdangerous import SignatureExpired, BadSignature
 
 
-class User(db.Model):
+class User(Base):
     __tablename__ = 'user'
     login = Column(String, primary_key=True)
     roles = relationship("Role", secondary=lambda: user_roles, backref="user")
@@ -209,9 +182,3 @@ class Factor(CommonColumns):
     type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
     description = Column(String(80))# instrument item description
     result = Column(String(80))# instrument item value outcome
-
-
-db.create_all()
-
-app.run(debug=True, use_reloader=True) # using reloaded will destroy db
-
