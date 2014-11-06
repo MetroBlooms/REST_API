@@ -1,4 +1,4 @@
-#!/usr/local/bin/python
+#!venv/bin/python
 import os.path
 
 from app import db
