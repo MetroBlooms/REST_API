@@ -3,7 +3,7 @@ REST-API
 
 REST API for managing BMP evaluation data
 
-Uses Flask, Flask-Restless
+Uses Flask-SQLAlchemy, Flask-Restless
 --
 Use virtualenv:
 
