@@ -1,5 +1,13 @@
 Fabric
 Flask
 Flask-Admin
+Flask-Httpauth
+Flask-Restless
 Flask-SQLAlchemy
+passlib
 psycopg2
+Jinja2
+MarkupSafe
+SQLAlchemy
+Werkzeug
+itsdangerous

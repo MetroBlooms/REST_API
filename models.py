@@ -4,6 +4,12 @@
     It has no dependency on flask or eve itself. Pure sqlalchemy.
 """
 from app import db
+
+from itsdangerous import (TimedJSONWebSignatureSerializer
+                          as Serializer, BadSignature, SignatureExpired)
+from passlib.apps import custom_app_context as pwd_context
+
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import inspect
 from sqlalchemy.ext.declarative import declarative_base
@@ -24,76 +30,39 @@ from sqlalchemy import (
 
 Base = declarative_base()
 Base.metadata.bind = db.engine
-db.Model = Base
 
 
-class CommonColumns(Base):
-    __abstract__ = True
-    _created = Column(DateTime, default=func.now())
-    _updated = Column(DateTime, default=func.now(), onupdate=func.now())
-
-    @hybrid_property
-    def _id(self):
-        """
-        Eve backward compatibility
-        """
-        return self.id
-
-    def jsonify(self):
-        """
-        Used to dump related objects to json
-        """
-        relationships = inspect(self.__class__).relationships.keys()
-        mapper = inspect(self)
-        attrs = [a.key for a in mapper.attrs if \
-                a.key not in relationships \
-                and not a.key in mapper.expired_attributes]
-        attrs += [a.__name__ for a in inspect(self.__class__).all_orm_descriptors if a.extension_type is hybrid.HYBRID_PROPERTY]
-        return dict([(c, getattr(self, c, None)) for c in attrs])
-
-
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from itsdangerous import SignatureExpired, BadSignature
-
-
-class User(Base):
+class User(db.Model):
     __tablename__ = 'user'
-    login = Column(String, primary_key=True)
-    roles = relationship("Role", secondary=lambda: user_roles, backref="user")
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(32), index = True)
+    password_hash = db.Column(db.String(128))
+ #   roles = relationship("Role", secondary=lambda: user_roles, backref="user")
 
-    def generate_auth_token(self, expiration=24*60*60):
-        s = Serializer(SECRET_KEY, expires_in=expiration)
-        return s.dumps({'login': self.login })
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
+
+    def generate_auth_token(self, expiration = 3600): # set expiration to 1 hour
+        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+        return s.dumps({ 'id': self.id })
 
     @staticmethod
     def verify_auth_token(token):
-        s = Serializer(SECRET_KEY)
+        s = Serializer(app.config['SECRET_KEY'])
         try:
             data = s.loads(token)
         except SignatureExpired:
             return None # valid token, but expired
         except BadSignature:
             return None # invalid token
-        return data['login']
-
-    def isAuthorized(self, role_names):
-        allowed_roles = set([r.id for r in self.roles]).intersection(set(role_names))
-        return len(allowed_roles) > 0
+        user = User.query.get(data['id'])
+        return user
 
 
-class Role(Base):
-    __tablename__ = 'role'
-    name = Column(String(50), primary_key=True)
-
-
-user_roles = Table(
-    'user_roles', Base.metadata,
-    Column('user_name', String, ForeignKey('user.login')),
-    Column('role_name', String, ForeignKey('role.name'))
-)
-
-
-class Address(CommonColumns):
+class Address(db.Model):
     __tablename__ = 'address'
     id = Column(Integer, primary_key=True, autoincrement=True)
     address = Column(String(80))
@@ -104,7 +73,7 @@ class Address(CommonColumns):
     county = Column(String(80))
 
 
-class Geoposition(CommonColumns):
+class Geoposition(db.Model):
     __tablename__ = 'geoposition'
     id = Column(Integer, primary_key=True, autoincrement=True)
     site_id = Column(Integer)
@@ -114,7 +83,7 @@ class Geoposition(CommonColumns):
     timestamp = Column(DateTime)
 
 
-class Site(CommonColumns):
+class Site(db.Model):
     __tablename__ = 'site'
     id = Column(Integer, primary_key=True, autoincrement=True)
     site_name  = Column(String(80))# does site have a formal name
@@ -126,7 +95,7 @@ class Site(CommonColumns):
     site_maintainers = relationship("SiteMaintainer", backref="site")
 
 
-class Evaluation(CommonColumns):
+class Evaluation(db.Model):
     __tablename__ = 'evaluation'
     id  = Column(Integer, primary_key=True, autoincrement=True)
     evaluator_id = Column(Integer, ForeignKey('person.id'))
@@ -138,7 +107,7 @@ class Evaluation(CommonColumns):
     site_id = Column(Integer, ForeignKey('site.id'))
 
 
-class Person(CommonColumns):
+class Person(db.Model):
     __tablename__ = 'person'
     id = Column(Integer, primary_key=True, autoincrement=True)
     first_name = Column(String(20))
@@ -153,7 +122,7 @@ class Person(CommonColumns):
     type = Column(Enum("evaluator", "site maintainer", name = "person_types"))
 
 
-class SiteMaintainer(CommonColumns):
+class SiteMaintainer(db.Model):
     __tablename__ = 'site_maintainer'
     id = Column(Integer, primary_key=True, autoincrement=True)
     site_id = Column(Integer, ForeignKey('site.id'))
@@ -161,14 +130,14 @@ class SiteMaintainer(CommonColumns):
     person = relationship("Person", backref=backref("site_maintainer", uselist=False))
 
 
-class Phone(CommonColumns):
+class Phone(db.Model):
     __tablename__ = 'phone'
     id = Column(Integer, primary_key=True, autoincrement=True)
     exchange = Column(String(10))
     type = Column(Enum("mobile", "business", "home", name = "phone_types"))
 
 
-class Email(CommonColumns):
+class Email(db.Model):
     __tablename__ = 'email'
     id = Column(Integer, primary_key=True, autoincrement=True)
     address = Column(String(80))# need validator
@@ -176,7 +145,7 @@ class Email(CommonColumns):
 # now the fun begins:
 
 # evaluation instrument items
-class Factor(CommonColumns):
+class Factor(db.Model):
     __tablename__ = 'factor'
     id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
