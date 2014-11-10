@@ -1,18 +1,34 @@
-from fabric.api import local, path, cd, prefix
+from fabric.api import *
 from contextlib import contextmanager
 
-project_dir = '~/development/python/rest-api'
-env_bin_dir = project_dir + '/venv/bin' # use virtual environment to execute commandsi
+env.directory = '/Users/gregsilverman/development/python/rest-api'
+env.activate = 'source ' + env.directory + '/venv/bin/activate' # use virtual environment to execute commands
 
+@contextmanager
+def virtualenv():
+    with cd(env.directory):
+        with prefix(env.activate):
+            yield
 
 def prepare():
-     with path(env_bin_dir, behavior='prepend'):
+     with virtualenv():
         local('git pull')
         local('/bin/bash venv/bin/activate')
         local('pip freeze')
-        local('pip install -r requirements.txt')
+        #local('pip install -r requirements.txt')
         # ensure correct python from virtual environment is being used
         local('which python')
+
+def db_create():
+     with virtualenv():
+        local('which python')
+        local('./db_create.py')
+
+def api():
+    with virtualenv():
+        local('which python')
+        local('./api.py')
+
 
 def scm():
     local('git add --all')
