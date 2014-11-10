@@ -15,7 +15,7 @@ def prepare():
         local('git pull')
         local('/bin/bash venv/bin/activate')
         local('pip freeze')
-        #local('pip install -r requirements.txt')
+        local('pip install -r requirements.txt')
         # ensure correct python from virtual environment is being used
         local('which python')
 
