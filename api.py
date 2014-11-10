@@ -6,11 +6,14 @@ import os
 from flask import Flask, abort, request, jsonify, g, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
-
+import flask.ext.restless
 
 # extensions
 from app import db, app, models
 auth = HTTPBasicAuth()
+
+# Create the Flask-Restless API manager.
+manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 
 User = models.User
 

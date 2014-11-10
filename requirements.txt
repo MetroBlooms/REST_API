@@ -1,4 +1,5 @@
 Fabric
+fabric-virtualenv
 Flask
 Flask-Admin
 Flask-Httpauth
