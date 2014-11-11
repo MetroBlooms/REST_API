@@ -37,6 +37,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     username = db.Column(db.String(32), index = True)
     password_hash = db.Column(db.String(128))
+    person_id = Column(Integer, ForeignKey('person.id'))
+    person = relationship("Person", backref=backref("user", uselist=False))
  #   roles = relationship("Role", secondary=lambda: user_roles, backref="user")
 
     def hash_password(self, password):

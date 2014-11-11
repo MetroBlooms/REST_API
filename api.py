@@ -8,14 +8,15 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
 import flask.ext.restless
 
-# extensions
+
+# load extensions
 from app import db, app, models
+
 auth = HTTPBasicAuth()
 
-# Create the Flask-Restless API manager.
-manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
-
+# Classes used in API calls
 User = models.User
+Person = models.Person
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -65,6 +66,32 @@ def get_auth_token():
 @auth.login_required
 def get_resource():
     return jsonify({'data': 'Hello, %s!' % g.user.username})
+
+# Testing 1, 2, 3....
+
+# Create the Flask-Restless API manager.
+restless_manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
+
+# Create API endpoints, which will be available at /api/<tablename> by
+# default. Allowed HTTP methods can be specified as well.
+restless_manager.create_api(User, methods=['GET', 'POST', 'DELETE'])
+
+# joins in output
+
+@app.route('/api/test', methods=['GET'])
+def stuff():
+  if request.method == 'GET':
+    results = db.session.query(User).join(Person, User.person_id==Person.id)
+
+    json_results = []
+    for result in results:
+      d = {'username': result.username,
+           'id': result.id,
+           'type': result.person.type},
+      json_results.append(d)
+
+    return jsonify(items=json_results)
+
 
 if __name__ == '__main__':
     # Start app

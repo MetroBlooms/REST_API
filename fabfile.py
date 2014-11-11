@@ -28,6 +28,7 @@ def api():
     with virtualenv():
         local('which python')
         local('./api.py')
+        local('which python')
 
 
 def scm():
