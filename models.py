@@ -162,4 +162,5 @@ class TestMe(db.Model):
     type = Person.type,
     p_id = Person.id
     u_id = User.id
-    id = User.id
+    id = column_property(Person.id, User.person_id)
+    user_id = User.id
