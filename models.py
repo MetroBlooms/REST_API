@@ -154,9 +154,12 @@ class Factor(db.Model):
     description = Column(String(80))# instrument item description
     result = Column(String(80))# instrument item value outcome
 
-user_table_join = join(User, Person)
+user_table_join = join(User, Person, User.person_id==Person.id)
 
 class TestMe(db.Model):
     __table__ = user_table_join
     user = User.username,
-    type = Person.type
+    type = Person.type,
+    p_id = Person.id
+    u_id = User.id
+    id = User.id
