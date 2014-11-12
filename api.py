@@ -16,7 +16,7 @@ auth = HTTPBasicAuth()
 # Classes used in API calls
 User = models.User
 Person = models.Person
-TestMe = models.TestMe
+#TestMe = models.TestMe
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -94,7 +94,7 @@ def stuff():
 
 
 
-restless_manager.create_api(TestMe, methods=['GET', 'POST', 'DELETE'])
+#restless_manager.create_api(TestMe, methods=['GET', 'POST', 'DELETE'])
 
 
 if __name__ == '__main__':
