@@ -8,7 +8,6 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
 import flask.ext.restless
 
-
 # load extensions
 from app import db, app, models
 
@@ -17,6 +16,7 @@ auth = HTTPBasicAuth()
 # Classes used in API calls
 User = models.User
 Person = models.Person
+TestMe = models.TestMe
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -91,6 +91,10 @@ def stuff():
       json_results.append(d)
 
     return jsonify(items=json_results)
+
+
+
+restless_manager.create_api(TestMe, methods=['GET', 'POST', 'DELETE'])
 
 
 if __name__ == '__main__':

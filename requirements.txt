@@ -3,6 +3,7 @@ Flask
 Flask-Admin
 Flask-Httpauth
 Flask-Restless
+Flask-Restful
 Flask-SQLAlchemy
 passlib
 psycopg2

@@ -11,7 +11,7 @@ from passlib.apps import custom_app_context as pwd_context
 
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import inspect
+from sqlalchemy import inspect, join
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref, column_property
 from sqlalchemy.ext import hybrid
@@ -153,3 +153,10 @@ class Factor(db.Model):
     type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
     description = Column(String(80))# instrument item description
     result = Column(String(80))# instrument item value outcome
+
+user_table_join = join(User, Person)
+
+class TestMe(db.Model):
+    __table__ = user_table_join
+    user = User.username,
+    type = Person.type
