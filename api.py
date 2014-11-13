@@ -16,7 +16,7 @@ auth = HTTPBasicAuth()
 # Classes used in API calls
 User = models.User
 Person = models.Person
-#TestMe = models.TestMe
+Evaluation = models.Evaluation
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -76,25 +76,34 @@ restless_manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
 # default. Allowed HTTP methods can be specified as well.
 restless_manager.create_api(User, methods=['GET', 'POST', 'DELETE'])
 
-# joins in output
+# test JSON for use in APIs
 
-@app.route('/api/test', methods=['GET'])
-def stuff():
-  if request.method == 'GET':
-    results = db.session.query(User).join(Person, User.person_id==Person.id)
+def results():
+    results = db.session.query(Person).\
+        join(User, User.person_id==Person.id).\
+        join(Evaluation, Evaluation.evaluator_id==Person.id)
 
     json_results = []
+
     for result in results:
-      d = {'username': result.username,
-           'id': result.id,
-           'type': result.person.type},
+      d = {'username': result.user.username,
+            'id': result.id,
+            'type': result.type,
+            'comment': result.evaluation.comments},
       json_results.append(d)
 
     return jsonify(items=json_results)
 
 
+@app.route('/api/test', methods=['GET'])
+def stuff():
+  if request.method == 'GET':
+    json = results()
+    return json
 
-#restless_manager.create_api(TestMe, methods=['GET', 'POST', 'DELETE'])
+
+#result = db.session.query(User, Person).filter(User.person_id==Person.id).filter(User.username=='miguel').all()
+#restless_manager.create_api(result, methods=['GET'])
 
 
 if __name__ == '__main__':

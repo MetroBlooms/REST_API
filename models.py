@@ -9,6 +9,8 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 from passlib.apps import custom_app_context as pwd_context
 
+from sqlalchemy.engine import reflection
+from sqlalchemy.engine.reflection import Inspector
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import inspect, join
@@ -153,49 +155,4 @@ class Factor(db.Model):
     type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
     description = Column(String(80))# instrument item description
     result = Column(String(80))# instrument item value outcome
-
-#user_table_join = join(User, Person, User.person_id==Person.id)
-
-#class TestMe(Base):
-#    __table__ = user_table_join
-#    id = (Person.id, User.person_id)
-#    user_id = User.id
-#    __mapper_args__ = {
-#        'exclude_properties' : ['User.id'],
-#        'primary_key' : [Person.id]
-#    }
-
-
-from sqlalchemy import Table
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.expression import Executable, ClauseElement
-
-class CreateView(Executable, ClauseElement):
-    def __init__(self, name, select):
-        self.name = name
-        self.select = select
-
-@compiles(CreateView)
-def visit_create_view(element, compiler, **kw):
-    return "CREATE VIEW %s AS %s" % (
-         element.name,
-         compiler.process(element.select, literal_binds=True)
-         )
-
-# test data
-from sqlalchemy import MetaData, Column, Integer
-from sqlalchemy.engine import create_engine
-engine = create_engine('postgres://test:test@localhost/test')
-metadata = MetaData(engine)
-
-test = Table('user', metadata, autoload=True)
-
-# create view
-createview = CreateView('viewname', test)
-engine.execute(createview)
-
-# reflect view and print result
-v = Table('viewname', metadata, autoload=True)
-for r in engine.execute(v.select()):
-    print r
 
