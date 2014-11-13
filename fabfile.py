@@ -30,7 +30,6 @@ def db_create():
 # make API available
 def api():
     with virtualenv():
-        local('which python')
         local('./api.py')
         local('which python')
 
