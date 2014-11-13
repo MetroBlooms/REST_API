@@ -37,4 +37,4 @@ def api():
 def scm():
     local('git add --all')
     local('git commit')
-    local('git push')
+    local('git push origin master')
