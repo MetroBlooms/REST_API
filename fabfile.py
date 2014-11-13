@@ -33,7 +33,7 @@ def api():
         local('./api.py')
         local('which python')
 
-
+# push change to repo
 def scm():
     local('git add --all')
     local('git commit')
