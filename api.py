@@ -6,10 +6,12 @@ import os
 from flask import Flask, abort, request, jsonify, g, url_for
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
-import flask.ext.restless
+from flask.ext import restful
 
 # load extensions
 from app import db, app, models
+
+api = restful.Api(app)
 
 auth = HTTPBasicAuth()
 
@@ -69,15 +71,7 @@ def get_resource():
 
 # Testing 1, 2, 3....
 
-# Create the Flask-Restless API manager.
-restless_manager = flask.ext.restless.APIManager(app, flask_sqlalchemy_db=db)
-
-# Create API endpoints, which will be available at /api/<tablename> by
-# default. Allowed HTTP methods can be specified as well.
-restless_manager.create_api(User, methods=['GET', 'POST', 'DELETE'])
-
 # test JSON for use in APIs
-
 def results():
     results = db.session.query(Person).\
         join(User, User.person_id==Person.id).\
@@ -102,9 +96,12 @@ def stuff():
     return json
 
 
-#result = db.session.query(User, Person).filter(User.person_id==Person.id).filter(User.username=='miguel').all()
-#restless_manager.create_api(result, methods=['GET'])
+class TestMe(restful.Resource):
+    def get(self):
+        json = results()
+        return json
 
+api.add_resource(TestMe, '/api/TestMe')
 
 if __name__ == '__main__':
     # Start app
