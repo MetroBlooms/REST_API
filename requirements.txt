@@ -6,6 +6,7 @@ Flask-Restless
 Flask-Restful
 Flask-SQLAlchemy
 Flask-WTF
+Flask-Login
 passlib
 psycopg2
 Jinja2

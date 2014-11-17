@@ -23,7 +23,7 @@ Evaluation = models.Evaluation
 
 @app.route("/")
 def index():
-    return '<a href="/api/TestMe">Click me to get to TestMe!</a>'
+    return '<a href="/login">Click me to log in!</a>'
 
 
 @auth.verify_password
