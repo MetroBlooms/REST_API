@@ -8,7 +8,7 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 # import models as a subclass
-import models
+import models, views
 
 
 

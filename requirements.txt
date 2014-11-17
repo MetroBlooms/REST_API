@@ -5,6 +5,7 @@ Flask-Httpauth
 Flask-Restless
 Flask-Restful
 Flask-SQLAlchemy
+Flask-WTF
 passlib
 psycopg2
 Jinja2
@@ -12,3 +13,4 @@ MarkupSafe
 SQLAlchemy
 Werkzeug
 itsdangerous
+requests

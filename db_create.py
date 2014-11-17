@@ -1,7 +1,7 @@
 #!venv/bin/python
 import os.path
 
-from app import db, app
+from app import db
 
 
 # Create db

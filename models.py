@@ -3,7 +3,7 @@
     This is a typical declarative usage of sqlalchemy,
     It has no dependency on flask or eve itself. Pure sqlalchemy.
 """
-from app import db
+from app import db, app
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)

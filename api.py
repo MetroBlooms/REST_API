@@ -3,10 +3,11 @@
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
 import os
-from flask import Flask, abort, request, jsonify, g, url_for
+from flask import Flask, abort, request, jsonify, g, url_for, redirect, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext import restful
+from forms import LoginForm
 
 # load extensions
 from app import db, app, models
@@ -19,6 +20,11 @@ auth = HTTPBasicAuth()
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
+
+@app.route("/")
+def index():
+    return '<a href="/api/TestMe">Click me to get to TestMe!</a>'
+
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -96,12 +102,21 @@ def stuff():
     return json
 
 
-class TestMe(restful.Resource):
-    def get(self):
-        json = results()
-        return json
+# class TestMe(restful.Resource):
+@app.route('/api/TestMe', methods=['GET','POST'])
+def TestMe():
+        #json = results()
+        #return json
+    #if request.method == 'POST':
+    form = LoginForm()
+    if request.headers['Content-Type'] == 'text/plain':
+        return "Text Message: " + request.data
 
-api.add_resource(TestMe, '/api/TestMe')
+    return  jsonify({'username': session['username']}) #form.username.data})
+    #else:
+            #return 'Invalid username/password'
+
+#api.add_resource(TestMe, '/api/TestMe')
 
 if __name__ == '__main__':
     # Start app
