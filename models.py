@@ -3,7 +3,7 @@
     This is a typical declarative usage of sqlalchemy,
     It has no dependency on flask or eve itself. Pure sqlalchemy.
 """
-from app import db
+from app import db, app
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
@@ -36,8 +36,8 @@ Base.metadata.bind = db.engine
 
 class User(db.Model):
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key = True)
-    username = db.Column(db.String(32), index = True)
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(32), index=True)
     password_hash = db.Column(db.String(128))
     person_id = Column(Integer, ForeignKey('person.id'))
     person = relationship("Person", backref=backref("user", uselist=False))
@@ -50,7 +50,7 @@ class User(db.Model):
         return pwd_context.verify(password, self.password_hash)
 
     def generate_auth_token(self, expiration = 3600): # set expiration to 1 hour
-        s = Serializer(app.config['SECRET_KEY'], expires_in = expiration)
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
         return s.dumps({ 'id': self.id })
 
     @staticmethod
@@ -64,6 +64,24 @@ class User(db.Model):
             return None # invalid token
         user = User.query.get(data['id'])
         return user
+
+    def is_authenticated(self):
+        return True
+
+    def is_active(self):
+        return True
+
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        try:
+            return unicode(self.id)  # python 2
+        except NameError:
+            return str(self.id)  # python 3
+
+    def __repr__(self):
+        return '<User %r>' % (self.username)
 
 
 class Address(db.Model):
@@ -123,7 +141,7 @@ class Person(db.Model):
     address = relationship("Address", backref=backref("person", uselist=False))
     phone_id = Column(Integer, ForeignKey('phone.id'))
     phone = relationship("Phone", backref=backref("person", uselist=False))
-    type = Column(Enum("evaluator", "site maintainer", name = "person_types"))
+    type = Column(Enum("evaluator", "site maintainer", name="person_types"))
 
 
 class SiteMaintainer(db.Model):
