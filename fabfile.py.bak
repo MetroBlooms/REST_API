@@ -11,14 +11,13 @@ def virtualenv():
         with prefix(env.activate):
             yield
 
-def call( cmd):
-   local( cmd, shell="/bin/bash")
+def call(cmd):
+   local( cmd, shell='/bin/bash')
 
 # set up environment prior to dev
 def prepare():
      with virtualenv():
-        call('git pull')
-        call('/bin/bash venv/bin/activate')
+        call( 'git pull')
         call('pip freeze')
         call('pip install -r requirements.txt')
         # ensure correct python from virtual environment is being used
@@ -27,18 +26,17 @@ def prepare():
 # create db structure from models
 def db_create():
      with virtualenv():
-        call('which python')
-        call('./db_create.py')
+        local('which python')
+        local('./db_create.py')
 
 # make API available
 def api():
     with virtualenv():
-        call('./api.py')
-        call('which python')
+        local('./api.py')
+        local('which python')
 
 # push change to repo
 def scm():
-    call('git add --all')
-    call('git commit')
-    call('git push origin master')
-
+    local('git add --all')
+    local('git commit')
+    local('git push origin master')
