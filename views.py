@@ -10,6 +10,7 @@ from wtforms import validators
 
 User = models.User
 
+
 # intialize Flask-login
 def init_login():
     login_manager = login.LoginManager()
@@ -38,6 +39,10 @@ def login():
 
         # validate the user...
         user = get_user()
+
+        print user.username
+        session['username'] = user.username
+
         if form_data is None or form_data == "":
             flash('Invalid login. Please try again.')
             return render_template("login.html", title='Sign In', form=form)

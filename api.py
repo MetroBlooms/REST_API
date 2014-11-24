@@ -9,7 +9,6 @@ from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext import restful
 from forms import LoginForm
 from flask_mail import Mail
-from flask.ext.security import Security
 
 # load extensions
 from app import db, app, api, mail, models
@@ -22,7 +21,7 @@ User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
 
-@app.route("/test_log")
+@app.route("/")
 def index():
     return '<a href="/login">Click me to log in!</a>'
 
@@ -113,7 +112,7 @@ def TestMe():
     if request.headers['Content-Type'] == 'text/plain':
         return "Text Message: " + request.data
 
-    return  jsonify({'username': session['username']}) #form.username.data})
+    return jsonify({'username': session['username']}) #form.username.data})
     #else:
             #return 'Invalid username/password'
 
@@ -129,16 +128,6 @@ def test_msg():
                   recipients=[""])
 
     mail.send(msg)
-
-# Views
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/reset', methods=['GET'])
-def register():
-     return render_template('security/reset_password.html')
-
 
 if __name__ == '__main__':
     # Start app
