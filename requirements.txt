@@ -2,9 +2,11 @@ Fabric
 Flask
 Flask-Admin
 Flask-Httpauth
+Flask-Mail
 Flask-Restless
 Flask-Restful
 Flask-SQLAlchemy
+Flask-Security
 Flask-WTF
 Flask-Login
 passlib

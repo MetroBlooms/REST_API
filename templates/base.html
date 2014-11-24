@@ -18,6 +18,21 @@
         </ul>
       {% endif %}
     {% endwith %}
+
+    {%- with messages = get_flashed_messages(with_categories=true) -%}
+      {% if messages %}
+        <ul class=flashes>
+        {% for category, message in messages %}
+          <li class="{{ category }}">{{ message }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {%- endwith %}
+    <ul>
+      <li>Hello {{ current_user.email }}</li>
+      <li><a href="{{ url_for_security('forgot_password') }}">Login</a></li>
+    </ul>
+        {% include "security/_menu.html" %}
     {% block content %}{% endblock %}
   </body>
 </html>

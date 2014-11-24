@@ -112,7 +112,7 @@ class Site(db.Model):
     address_id = Column(Integer, ForeignKey('address.id'))
     address = relationship("Address", backref=backref("site", uselist=False))
     geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
-    geoposition = relationship("Geoposition", backref=backref("geoposition", uselist=False))
+    geoposition = relationship("Geoposition", backref=backref("site", uselist=False))
     evaluations = relationship("Evaluation", backref="site")
     site_maintainers = relationship("SiteMaintainer", backref="site")
 

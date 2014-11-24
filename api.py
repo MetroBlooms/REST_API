@@ -3,16 +3,17 @@
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
 import os
-from flask import Flask, abort, request, jsonify, g, url_for, redirect, session
+from flask import Flask, render_template, abort, request, jsonify, g, url_for, redirect, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth
 from flask.ext import restful
 from forms import LoginForm
+from flask_mail import Mail
+from flask.ext.security import Security
 
 # load extensions
-from app import db, app, models
+from app import db, app, api, mail, models
 
-api = restful.Api(app)
 
 auth = HTTPBasicAuth()
 
@@ -21,7 +22,7 @@ User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
 
-@app.route("/")
+@app.route("/test_log")
 def index():
     return '<a href="/login">Click me to log in!</a>'
 
@@ -117,6 +118,27 @@ def TestMe():
             #return 'Invalid username/password'
 
 #api.add_resource(TestMe, '/api/TestMe')
+
+from flask_mail import Message
+
+@app.route("/api/test_msg")
+def test_msg():
+
+    msg = Message("Hello",
+                  sender="Me",
+                  recipients=[""])
+
+    mail.send(msg)
+
+# Views
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/reset', methods=['GET'])
+def register():
+     return render_template('security/reset_password.html')
+
 
 if __name__ == '__main__':
     # Start app
