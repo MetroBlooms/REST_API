@@ -1,6 +1,7 @@
 Fabric
 Flask
 Flask-Admin
+flask-cors
 Flask-Httpauth
 Flask-Mail
 Flask-Restless

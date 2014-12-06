@@ -12,6 +12,7 @@ from flask_mail import Mail
 
 # load extensions
 from app import db, app, api, mail, models
+from flask_cors import cross_origin
 
 
 auth = HTTPBasicAuth()
@@ -70,7 +71,8 @@ def get_auth_token():
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
 
-@app.route('/api/resource')
+@app.route('/api/resource', methods=['POST','OPTIONS'])
+@cross_origin() # allow all origins all methods
 @auth.login_required
 def get_resource():
     return jsonify({'data': 'Hello, %s!' % g.user.username})

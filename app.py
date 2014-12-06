@@ -4,7 +4,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from flask.ext import restful
 from flask.ext.security import Security
-
+from flask_cors import CORS, cross_origin
 
 # Define Flask app
 app = Flask(__name__)
@@ -20,6 +20,7 @@ mail = Mail(app)
 # import models as a subclass
 import models, views
 
+cors = CORS(app)
 
 
 

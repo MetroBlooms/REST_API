@@ -20,4 +20,5 @@ MAIL_USE_SSL = True
 MAIL_USERNAME = '@gmail.com'
 MAIL_PASSWORD = ''
 
-
+# CORS headers with JSON
+CORS_HEADERS = 'Content-Type'
