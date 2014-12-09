@@ -3,12 +3,15 @@
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
 import os
-from flask import Flask, render_template, abort, request, jsonify, g, url_for, redirect, session
+from flask import Flask, render_template, abort, request, Response, jsonify, g, url_for, redirect, session
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.httpauth import HTTPBasicAuth
+from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 from flask.ext import restful
 from forms import LoginForm
 from flask_mail import Mail
+
+# test
+from flask.ext.login import LoginManager, login_required
 
 # load extensions
 from app import db, app, api, mail, models
@@ -16,11 +19,34 @@ from flask_cors import cross_origin
 
 
 auth = HTTPBasicAuth()
+#auth = HTTPDigestAuth()
 
 # Classes used in API calls
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
+
+#test
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+@login_manager.request_loader
+def load_user(request):
+    token = request.headers.get('X-Auth-Token')
+    if token is None:
+        token = request.args.get('token')
+
+    print token
+
+    if token is not None:
+        username,password = token.split(":") # naive token
+        user_entry = User.get(username)
+        if (user_entry is not None):
+            user = User(user_entry[0],user_entry[1])
+            if (user.password == password):
+                return user
+    return None
+
 
 @app.route("/")
 def index():
@@ -64,7 +90,8 @@ def get_user(id):
     return jsonify({'username': user.username})
 
 
-@app.route('/api/token')
+@app.route('/api/token', methods=['POST','OPTIONS'])
+@cross_origin() # allow all origins all methods
 @auth.login_required
 def get_auth_token():
     token = g.user.generate_auth_token(600)
@@ -117,6 +144,16 @@ def TestMe():
     return jsonify({'username': session['username']}) #form.username.data})
     #else:
             #return 'Invalid username/password'
+
+
+# test
+
+@app.route("/protected/",methods=["GET", "ORIGIN"])
+@cross_origin()
+@login_required
+def protected():
+    return Response(response="Hello Protected World!", status=200)
+
 
 #api.add_resource(TestMe, '/api/TestMe')
 

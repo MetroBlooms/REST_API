@@ -20,7 +20,7 @@ mail = Mail(app)
 # import models as a subclass
 import models, views
 
-cors = CORS(app)
+cors = CORS(app, headers="X-Requested-With, Content-Type")
 
 
 

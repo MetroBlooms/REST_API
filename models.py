@@ -7,7 +7,9 @@ from app import db, app
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
+
 from passlib.apps import custom_app_context as pwd_context
+from flask.ext.login import LoginManager, UserMixin, login_required
 
 from sqlalchemy.engine import reflection
 from sqlalchemy.engine.reflection import Inspector
@@ -34,7 +36,7 @@ Base = declarative_base()
 Base.metadata.bind = db.engine
 
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(32), index=True)

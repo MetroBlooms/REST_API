@@ -21,4 +21,7 @@ MAIL_USERNAME = '@gmail.com'
 MAIL_PASSWORD = ''
 
 # CORS headers with JSON
-CORS_HEADERS = 'Content-Type'
+#CORS_HEADERS = 'Content-Type'
+#token
+#CORS_HEADERS = 'X-Auth-Token'
+CORS_HEADERS = 'Content-Type, X-Auth-Token, X-Requested-With'
