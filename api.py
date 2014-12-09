@@ -26,7 +26,7 @@ User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
 
-#test
+#test token
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -40,10 +40,12 @@ def load_user(request):
 
     if token is not None:
         username,password = token.split(":") # naive token
-        user_entry = User.get(username)
-        if (user_entry is not None):
-            user = User(user_entry[0],user_entry[1])
-            if (user.password == password):
+
+        #print username
+        user = User.query.filter_by(username=username).first()  # get(username)
+        print user.username
+        if (user is not None):
+            if (user.verify_password(password)):
                 return user
     return None
 

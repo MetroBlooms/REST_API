@@ -40,7 +40,6 @@ def login():
         # validate the user...
         user = get_user()
 
-        print user.username
         session['username'] = user.username
 
         if form_data is None or form_data == "":
