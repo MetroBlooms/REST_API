@@ -45,7 +45,7 @@ class CustomLoginManager(LoginManager):
             ctx = _request_ctx_stack.top
             ctx.user = User.query.filter_by(username=request.headers.get('X-Auth-Token')).first()
             return
-        super(CustomLoginManager,self).reload_user()
+        # super(CustomLoginManager,self).reload_user()
 
 
 class User(db.Model, UserMixin):

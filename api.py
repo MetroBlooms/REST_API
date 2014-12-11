@@ -32,26 +32,6 @@ login_manager = CustomLoginManager()
 login_manager.init_app(app)
 
 
-# @login_manager.request_loader
-# def load_user(request):
-#     token = request.headers.get('X-Auth-Token')
-#     if token is None:
-#         token = request.args.get('token')
-#
-#     print token
-#
-#     if token is not None:
-#         username,password = token.split(":") # naive token
-#
-#         #print username
-#         user = User.query.filter_by(username=username).first()  # get(username)
-#         print user.username
-#         if (user is not None):
-#             if (user.verify_password(password)):
-#                 return user
-#     return None
-
-
 @app.route("/")
 def index():
     return '<a href="/login">Click me to log in!</a>'
