@@ -29,6 +29,8 @@ init_login()
 def login():
     form = LoginForm()
 
+    session['username'] = None
+
     # get instance of User class
     def get_user():
         return User.query.filter_by(username=form.username.data).first()

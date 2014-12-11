@@ -11,7 +11,7 @@ from forms import LoginForm
 from flask_mail import Mail
 
 # test
-from flask.ext.login import LoginManager, login_required
+from flask.ext.login import login_required
 
 # load extensions
 from app import db, app, api, mail, models
@@ -25,29 +25,31 @@ auth = HTTPBasicAuth()
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
+CustomLoginManager = models.CustomLoginManager
 
 #test token
-login_manager = LoginManager()
+login_manager = CustomLoginManager()
 login_manager.init_app(app)
 
-@login_manager.request_loader
-def load_user(request):
-    token = request.headers.get('X-Auth-Token')
-    if token is None:
-        token = request.args.get('token')
 
-    print token
-
-    if token is not None:
-        username,password = token.split(":") # naive token
-
-        #print username
-        user = User.query.filter_by(username=username).first()  # get(username)
-        print user.username
-        if (user is not None):
-            if (user.verify_password(password)):
-                return user
-    return None
+# @login_manager.request_loader
+# def load_user(request):
+#     token = request.headers.get('X-Auth-Token')
+#     if token is None:
+#         token = request.args.get('token')
+#
+#     print token
+#
+#     if token is not None:
+#         username,password = token.split(":") # naive token
+#
+#         #print username
+#         user = User.query.filter_by(username=username).first()  # get(username)
+#         print user.username
+#         if (user is not None):
+#             if (user.verify_password(password)):
+#                 return user
+#     return None
 
 
 @app.route("/")

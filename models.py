@@ -5,6 +5,7 @@
 """
 from app import db, app
 
+from flask import _request_ctx_stack, request
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
@@ -34,6 +35,17 @@ from sqlalchemy import (
 
 Base = declarative_base()
 Base.metadata.bind = db.engine
+
+
+#exxtend LoginManager
+
+class CustomLoginManager(LoginManager):
+    def reload_user(self):
+        if request.headers.has_key('X-Auth-Token'):
+            ctx = _request_ctx_stack.top
+            ctx.user = User.query.filter_by(username=request.headers.get('X-Auth-Token')).first()
+            return
+        super(CustomLoginManager,self).reload_user()
 
 
 class User(db.Model, UserMixin):
