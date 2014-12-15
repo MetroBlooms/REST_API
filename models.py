@@ -37,7 +37,7 @@ Base = declarative_base()
 Base.metadata.bind = db.engine
 
 
-#exxtend LoginManager
+#extend LoginManager
 
 class CustomLoginManager(LoginManager):
     def reload_user(self):

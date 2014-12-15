@@ -146,7 +146,7 @@ def TestMe():
 
 @app.route("/protected/",methods=["GET", "ORIGIN"])
 @cross_origin()
-@login_required
+@auth.login_required
 def protected():
     return Response(response="Hello Protected World!", status=200)
 
