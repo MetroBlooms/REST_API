@@ -24,4 +24,4 @@ MAIL_PASSWORD = ''
 #CORS_HEADERS = 'Content-Type'
 #token
 #CORS_HEADERS = 'X-Auth-Token'
-CORS_HEADERS = 'Content-Type, X-Auth-Token, X-Requested-With'
+CORS_HEADERS = 'XHR, Authorization, Content-Type, X-Auth-Token, X-Requested-With'

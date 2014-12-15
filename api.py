@@ -36,6 +36,18 @@ login_manager.init_app(app)
 def index():
     return '<a href="/login">Click me to log in!</a>'
 
+@login_manager.token_loader
+def verify_auth_token(token):
+    s = Serializer(app.config['SECRET_KEY'])
+    try:
+        data = s.loads(token)
+    except SignatureExpired:
+        return None # valid token, but expired
+    except BadSignature:
+        return None # invalid token
+    user = User.query.get(data['id'])
+    return user
+
 
 @auth.verify_password
 def verify_password(username_or_token, password):
@@ -74,7 +86,7 @@ def get_user(id):
     return jsonify({'username': user.username})
 
 
-@app.route('/api/token', methods=['POST','OPTIONS'])
+@app.route('/api/token', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
 @auth.login_required
 def get_auth_token():
@@ -82,7 +94,7 @@ def get_auth_token():
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
 
-@app.route('/api/resource', methods=['POST','OPTIONS'])
+@app.route('/api/resource', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
 @auth.login_required
 def get_resource():
