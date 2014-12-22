@@ -9,6 +9,7 @@ from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 from flask.ext import restful
 from forms import LoginForm
 from flask_mail import Mail
+import json
 
 # test
 from flask.ext.login import login_required
@@ -83,7 +84,25 @@ def get_auth_token():
 def get_resource():
     # Get the parsed contents of the form data
     json = request.json
-    print(json)
+
+    # print entire object
+    print json['site']
+
+    # define dictionary item for entire object
+    site = json['site']
+    print site["site_name"]
+
+    # print address object
+    print site['address']
+
+    # define address dictionary object
+    address = json['site']['address']
+    print address["address"]
+
+    # define geolocation dictionary object
+    geolocation = json['site']['geolocation']
+    print geolocation["accuracy"]
+
     # Render template
     return jsonify(json)
     #return jsonify({'data': 'Hello, %s!' % g.user.username})
