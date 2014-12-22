@@ -37,17 +37,6 @@ Base = declarative_base()
 Base.metadata.bind = db.engine
 
 
-#extend LoginManager
-
-class CustomLoginManager(LoginManager):
-    def reload_user(self):
-        if request.headers.has_key('X-Auth-Token'):
-            ctx = _request_ctx_stack.top
-            ctx.user = User.query.filter_by(username=request.headers.get('X-Auth-Token')).first()
-            return
-        # super(CustomLoginManager,self).reload_user()
-
-
 class User(db.Model, UserMixin):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)

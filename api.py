@@ -25,28 +25,11 @@ auth = HTTPBasicAuth()
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
-CustomLoginManager = models.CustomLoginManager
-
-#test token
-login_manager = CustomLoginManager()
-login_manager.init_app(app)
 
 
 @app.route("/")
 def index():
     return '<a href="/login">Click me to log in!</a>'
-
-@login_manager.token_loader
-def verify_auth_token(token):
-    s = Serializer(app.config['SECRET_KEY'])
-    try:
-        data = s.loads(token)
-    except SignatureExpired:
-        return None # valid token, but expired
-    except BadSignature:
-        return None # invalid token
-    user = User.query.get(data['id'])
-    return user
 
 
 @auth.verify_password
@@ -98,7 +81,12 @@ def get_auth_token():
 @cross_origin() # allow all origins all methods
 @auth.login_required
 def get_resource():
-    return jsonify({'data': 'Hello, %s!' % g.user.username})
+    # Get the parsed contents of the form data
+    json = request.json
+    print(json)
+    # Render template
+    return jsonify(json)
+    #return jsonify({'data': 'Hello, %s!' % g.user.username})
 
 # Testing 1, 2, 3....
 
@@ -140,16 +128,6 @@ def TestMe():
     return jsonify({'username': session['username']}) #form.username.data})
     #else:
             #return 'Invalid username/password'
-
-
-# test
-
-@app.route("/protected/",methods=["GET", "ORIGIN"])
-@cross_origin()
-@auth.login_required
-def protected():
-    return Response(response="Hello Protected World!", status=200)
-
 
 #api.add_resource(TestMe, '/api/TestMe')
 
