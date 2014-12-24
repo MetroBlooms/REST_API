@@ -2,14 +2,15 @@
 
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
-import os
+import os, json
 from flask import Flask, render_template, abort, request, Response, jsonify, g, url_for, redirect, session
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 from flask.ext import restful
 from forms import LoginForm
 from flask_mail import Mail
-import json
+from htsql import HTSQL
+from htsql.core.fmt.emit import emit
 
 # test
 from flask.ext.login import login_required
@@ -29,6 +30,8 @@ Evaluation = models.Evaluation
 Address = models.Address
 Site = models.Site
 Geoposition = models.Geoposition
+Evaluation = models.Evaluation
+Person = models.Person
 
 
 @app.route("/")
@@ -80,6 +83,7 @@ def get_auth_token():
     token = g.user.generate_auth_token(600)
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
+# Testing 1, 2, 3....
 
 # test Ajax
 @app.route('/api/resource', methods=['GET','POST','OPTIONS'])
@@ -108,12 +112,23 @@ def get_resource():
     geolocation = json['site']['geolocation']
     print geolocation["accuracy"]
 
+    # define person dictionary object
+    person = json['site']['person']
+    print person["first_name"]
+
+    evaluation = json['site']['evaluation']
+    print evaluation["comments"]
+
     # insert into tables
     a = Address(address = address["address"])
-    s = Site(site_name=site["site_name"], address = a)
+    p = Person(first_name = person["first_name"], type = person["type"])
+    e = Evaluation(comments = evaluation["comments"], exists = evaluation["exists"], evaluator = p)
+    s = Site(site_name=site["site_name"], address = a, evaluations = [e])
     #s.address.append(a)
 
     db.session.add(a)
+    db.session.add(p)
+    db.session.add(e)
     db.session.add(s)
     db.session.commit()
 
@@ -125,7 +140,19 @@ def get_resource():
     return jsonify(json)
     #return jsonify({'data': 'Hello, %s!' % g.user.username})
 
-# Testing 1, 2, 3....
+# test HTSQL
+@app.route('/api/htsql', methods=['GET','POST','OPTIONS'])
+@cross_origin() # allow all origins all methods
+@auth.login_required
+def get_htsql():
+    test = HTSQL("pgsql://test:test@localhost/test")
+    rows = test.produce("/address")
+
+    with test:
+        text = ''.join(emit('x-htsql/json', rows))
+
+    print text
+    return text
 
 # test JSON for use in APIs
 def results():

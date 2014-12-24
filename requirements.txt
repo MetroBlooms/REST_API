@@ -10,6 +10,7 @@ Flask-SQLAlchemy
 Flask-Security
 Flask-WTF
 Flask-Login
+HTSQL-PGSQL
 passlib
 psycopg2
 Jinja2
