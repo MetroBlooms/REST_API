@@ -96,6 +96,7 @@ class Address(db.Model):
     zip = Column(String(5))
     neighborhood =  Column(String(80))
     county = Column(String(80))
+    #site_id = Column(Integer, ForeignKey('site.id'))
 
 
 class Geoposition(db.Model):
@@ -106,7 +107,7 @@ class Geoposition(db.Model):
     longitude = Column(Float(20))
     accuracy = Column(Float(20))
     timestamp = Column(DateTime)
-
+    site_id = Column(Integer, ForeignKey('site.id'))
 
 class Site(db.Model):
     __tablename__ = 'site'
@@ -114,7 +115,7 @@ class Site(db.Model):
     site_name  = Column(String(80))# does site have a formal name
     address_id = Column(Integer, ForeignKey('address.id'))
     address = relationship("Address", backref=backref("site", uselist=False))
-    geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
+    #geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
     geoposition = relationship("Geoposition", backref=backref("site", uselist=False))
     evaluations = relationship("Evaluation", backref="site")
     site_maintainers = relationship("SiteMaintainer", backref="site")
@@ -125,7 +126,6 @@ class Evaluation(db.Model):
     id  = Column(Integer, primary_key=True, autoincrement=True)
     evaluator_id = Column(Integer, ForeignKey('person.id'))
     evaluator = relationship("Person", backref=backref("evaluation", uselist=False))
-    site_id = Column(Integer)
     evaluated_when = Column(DateTime)
     exists = Column(Boolean)# does site exist at time of evaluation
     comments = Column(String(80))

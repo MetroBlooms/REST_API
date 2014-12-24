@@ -26,6 +26,9 @@ auth = HTTPBasicAuth()
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
+Address = models.Address
+Site = models.Site
+Geoposition = models.Geoposition
 
 
 @app.route("/")
@@ -78,11 +81,13 @@ def get_auth_token():
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
 
+# test Ajax
 @app.route('/api/resource', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
 @auth.login_required
 def get_resource():
     # Get the parsed contents of the form data
+    # submitted via Ajax request
     json = request.json
 
     # print entire object
@@ -102,6 +107,19 @@ def get_resource():
     # define geolocation dictionary object
     geolocation = json['site']['geolocation']
     print geolocation["accuracy"]
+
+    # insert into tables
+    a = Address(address = address["address"])
+    s = Site(site_name=site["site_name"], address = a)
+    #s.address.append(a)
+
+    db.session.add(a)
+    db.session.add(s)
+    db.session.commit()
+
+    #print s.address.count(address) # 1
+    #print s.address[0] # <Address object at 0x10c098ed0>
+    #print s.address.filter_by(address = address["address"]).count(address) # 1
 
     # Render template
     return jsonify(json)
