@@ -119,14 +119,34 @@ def get_resource():
     evaluation = json['site']['evaluation']
     print evaluation["comments"]
 
+
     # insert into tables
-    a = Address(address = address["address"])
-    p = Person(first_name = person["first_name"], type = person["type"])
-    e = Evaluation(comments = evaluation["comments"], exists = evaluation["exists"], evaluator = p)
-    s = Site(site_name=site["site_name"], address = a, evaluations = [e])
-    #s.address.append(a)
+    a = Address(address = address["address"],
+                city = address["address"],
+                state = address["state"],
+                zip = address["zip"],
+                neighborhood = address["neighborhood"],
+                county = address["county"])
+
+    g = Geoposition(latitude = geolocation["latitude"],
+                    longitude = geolocation["longitude"],
+                    accuracy = geolocation["accuracy"])
+
+    p = Person(first_name = person["first_name"],
+               type = person["type"])
+
+    e = Evaluation(comments = evaluation["comments"],
+                   exists = evaluation["exists"],
+                   evaluator = p)
+
+    s = Site(site_name=site["site_name"],
+             address = a,
+             geoposition = g,
+             evaluations = [e])
+
 
     db.session.add(a)
+    db.session.add(g)
     db.session.add(p)
     db.session.add(e)
     db.session.add(s)
@@ -143,15 +163,15 @@ def get_resource():
 # test HTSQL
 @app.route('/api/htsql', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
-@auth.login_required
+#@auth.login_required
 def get_htsql():
     test = HTSQL("pgsql://test:test@localhost/test")
-    rows = test.produce("/address")
+    rows = test.produce("/site{*,address,geoposition}")
 
     with test:
         text = ''.join(emit('x-htsql/json', rows))
 
-    print text
+    #print text
     return text
 
 # test JSON for use in APIs

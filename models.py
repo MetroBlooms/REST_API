@@ -102,12 +102,11 @@ class Address(db.Model):
 class Geoposition(db.Model):
     __tablename__ = 'geoposition'
     id = Column(Integer, primary_key=True, autoincrement=True)
-    site_id = Column(Integer)
     latitude = Column(Float(20))
     longitude = Column(Float(20))
     accuracy = Column(Float(20))
     timestamp = Column(DateTime)
-    site_id = Column(Integer, ForeignKey('site.id'))
+    #site_id = Column(Integer, ForeignKey('site.id'))
 
 class Site(db.Model):
     __tablename__ = 'site'
@@ -115,7 +114,7 @@ class Site(db.Model):
     site_name  = Column(String(80))# does site have a formal name
     address_id = Column(Integer, ForeignKey('address.id'))
     address = relationship("Address", backref=backref("site", uselist=False))
-    #geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
+    geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
     geoposition = relationship("Geoposition", backref=backref("site", uselist=False))
     evaluations = relationship("Evaluation", backref="site")
     site_maintainers = relationship("SiteMaintainer", backref="site")
