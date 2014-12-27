@@ -166,7 +166,7 @@ def get_resource():
 #@auth.login_required
 def get_htsql():
     test = HTSQL("pgsql://test:test@localhost/test")
-    rows = test.produce("/site{*,address,geoposition}")
+    rows = test.produce("/evaluation{*,site{*,address,geoposition}}")
 
     with test:
         text = ''.join(emit('x-htsql/json', rows))
