@@ -161,17 +161,19 @@ def get_resource():
     #return jsonify({'data': 'Hello, %s!' % g.user.username})
 
 # test HTSQL
-@app.route('/api/htsql', methods=['GET','POST','OPTIONS'])
+#  & and | for logical operators
+@app.route('/api/htsql/<int:id>/<int:id2>', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
 #@auth.login_required
-def get_htsql():
+def get_htsql(id,id2):
+    criterion = '?id=' + str(id) + '|' 'evaluator_id=' + str(id2)
     test = HTSQL("pgsql://test:test@localhost/test")
-    rows = test.produce("/evaluation{*,site{*,address,geoposition}}")
+    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}" + criterion)
 
     with test:
         text = ''.join(emit('x-htsql/json', rows))
 
-    #print text
+    print text, rows
     return text
 
 # test JSON for use in APIs
