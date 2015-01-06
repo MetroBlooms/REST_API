@@ -96,7 +96,6 @@ class Address(db.Model):
     zip = Column(String(5))
     neighborhood =  Column(String(80))
     county = Column(String(80))
-    #site_id = Column(Integer, ForeignKey('site.id'))
 
 
 class Geoposition(db.Model):
@@ -106,7 +105,7 @@ class Geoposition(db.Model):
     longitude = Column(Float(20))
     accuracy = Column(Float(20))
     timestamp = Column(DateTime)
-    #site_id = Column(Integer, ForeignKey('site.id'))
+
 
 class Site(db.Model):
     __tablename__ = 'site'
@@ -166,7 +165,6 @@ class Email(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     address = Column(String(80))# need validator
 
-# now the fun begins:
 
 # evaluation instrument items
 class Factor(db.Model):
