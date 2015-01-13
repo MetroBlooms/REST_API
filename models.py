@@ -172,5 +172,5 @@ class Factor(db.Model):
     id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
     description = Column(String(80))# instrument item description
-    result = Column(String(80))# instrument item value outcome
+    value = Column(String(80))# instrument item value outcome
 

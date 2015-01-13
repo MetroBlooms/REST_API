@@ -168,13 +168,72 @@ def get_resource():
 def get_htsql(criterion):
     print criterion
     test = HTSQL("pgsql://test:test@localhost/test")
-    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}" + criterion)
+    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
 
+# /evaluation{comments,site{geoposition?accuracy=46.0&latitude%3C42},evaluator{first_name}}?evaluator.first_name='you'
+#
+# SELECT "evaluation"."comments",
+#        "site"."?_1",
+#        "site"."?_2",
+#        "site"."id_1",
+#        "site"."latitude",
+#        "site"."longitude",
+#        "site"."accuracy",
+#        "site"."timestamp",
+#        "person_2"."?",
+#        "person_2"."first_name"
+# FROM "evaluation"
+#      LEFT OUTER JOIN "person" AS "person_1"
+#                      ON ("evaluation"."evaluator_id" = "person_1"."id")
+#      LEFT OUTER JOIN (SELECT TRUE AS "?_1",
+#                              "geoposition"."?" AS "?_2",
+#                              "geoposition"."id" AS "id_1",
+#                              "geoposition"."latitude",
+#                              "geoposition"."longitude",
+#                              "geoposition"."accuracy",
+#                              "geoposition"."timestamp",
+#                              "site"."id" AS "id_2"
+#                       FROM "site"
+#                            LEFT OUTER JOIN (SELECT TRUE AS "?",
+#                                                    "geoposition"."id",
+#                                                    "geoposition"."latitude",
+#                                                    "geoposition"."longitude",
+#                                                    "geoposition"."accuracy",
+#                                                    "geoposition"."timestamp"
+#                                             FROM "geoposition"
+#                                             WHERE ("geoposition"."accuracy" = 46.0::FLOAT8)
+#                                                   AND ("geoposition"."latitude" < 42.0::FLOAT8)) AS "geoposition"
+#                                            ON ("site"."geoposition_id" = "geoposition"."id")) AS "site"
+#                      ON ("evaluation"."site_id" = "site"."id_2")
+#      LEFT OUTER JOIN (SELECT TRUE AS "?",
+#                              "person"."first_name",
+#                              "person"."id"
+#                       FROM "person") AS "person_2"
+#                      ON ("evaluation"."evaluator_id" = "person_2"."id")
+# WHERE ("person_1"."first_name" = 'you')
+# ORDER BY "evaluation"."id" ASC
     with test:
         text = ''.join(emit('x-htsql/json', rows))
 
     #print text, rows
     return text
+
+
+# test HTSQL
+#  & and | for logical operators
+@app.route('/api/factor', methods=['GET','POST','OPTIONS'])
+@cross_origin() # allow all origins all methods
+#@auth.login_required
+def get_factor():
+    test = HTSQL("pgsql://test:test@localhost/test")
+    rows = test.produce("/factor")
+
+    with test:
+        text = ''.join(emit('x-htsql/json', rows))
+
+    print text, rows
+    return text
+
 
 # test JSON for use in APIs
 def results():

@@ -25,7 +25,7 @@ def prepare():
         call('which python')
 
 # create db structure from models
-def db_create():
+def db():
      with virtualenv():
         call('which python')
         call('./db_create.py')
