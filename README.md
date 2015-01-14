@@ -20,7 +20,7 @@ $./db_create.py
 * Run RESTful web API:
 $./api.py
 
-* fabric build usage *
+Fabric build usage:
 
 - $ fab --list 
 
