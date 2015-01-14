@@ -6,7 +6,7 @@ REST API for managing BMP evaluation data
 Uses Flask, SQLAlchemy and various libraries
 
 
-* Setup virtualenv: *
+Setup virtualenv: 
 
 - $ virtualenv venv --distribute #install virtualenv
 - $ source venv/bin/activate #activate created virtualenv
