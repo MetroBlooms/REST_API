@@ -11,6 +11,7 @@ Flask-Security
 Flask-WTF
 Flask-Login
 HTSQL-PGSQL
+HTSQL-MYSQL
 passlib
 psycopg2
 Jinja2

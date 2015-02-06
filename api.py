@@ -167,8 +167,14 @@ def get_resource():
 #@auth.login_required
 def get_htsql(criterion):
     print criterion
-    test = HTSQL("pgsql://test:test@localhost/test")
-    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
+    test = HTSQL("mysql://gms:test@localhost/test")
+    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
+    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
+
+# http://127.0.0.1:8080/evaluation{comments,site{geoposition{id}?latitude=46&longitude%3E47},site{geoposition{accuracy}?latitude=46&longitude%3E47},evaluator{first_name}}?evaluator.first_name='you'/:sql
+# http://127.0.0.1:8080/site{site_name :as location, count(evaluation) :as 'N visits'}
+# http://127.0.0.1:8080/site{site_name :as location, count(evaluation) :as 'N visits'}?site_name!='Home'
+# http://127.0.0.1:8080/person{first_name + ' ' + last_name :as name, count(evaluation) :as 20'N visits'}?count(evaluation)>0
 
 # /evaluation{comments,site{geoposition?accuracy=46.0&latitude%3C42},evaluator{first_name}}?evaluator.first_name='you'
 #
@@ -225,7 +231,7 @@ def get_htsql(criterion):
 @cross_origin() # allow all origins all methods
 #@auth.login_required
 def get_factor():
-    test = HTSQL("pgsql://test:test@localhost/test")
+    test = HTSQL("mysql://gms:test@localhost/test")
     rows = test.produce("/factor")
 
     with test:
