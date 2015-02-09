@@ -168,8 +168,8 @@ def get_resource():
 def get_htsql(criterion):
     print criterion
     test = HTSQL("mysql://gms:test@localhost/test")
-    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
-    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
+    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?evaluator." + criterion)
+    # rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
 
 # http://127.0.0.1:8080/evaluation{comments,site{geoposition{id}?latitude=46&longitude%3E47},site{geoposition{accuracy}?latitude=46&longitude%3E47},evaluator{first_name}}?evaluator.first_name='you'/:sql
 # http://127.0.0.1:8080/site{site_name :as location, count(evaluation) :as 'N visits'}
@@ -224,9 +224,24 @@ def get_htsql(criterion):
     #print text, rows
     return text
 
+# test nested data
+@app.route('/api/nested/', methods=['GET','POST','OPTIONS'])
+@cross_origin() # allow all origins all methods
+#@auth.login_required
+def get_nested():
+    test = HTSQL("mysql://nester:nesting@localhost/nestedsetspoc")
+    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
+    rows = test.produce("/clinical_data{id, patient_sid :as sid,string_value :as value,attribute{attribute_value}}")
+    # rows = test.produce("/attribute{attribute_value, clinical_data{patient_sid :as sid,string_value :as value}}")
 
-# test HTSQL
-#  & and | for logical operators
+    with test:
+        text = ''.join(emit('x-htsql/json', rows))
+
+    #print text, rows
+    return text
+
+
+# test HTSQL with REST proxy call
 @app.route('/api/factor', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
 #@auth.login_required
