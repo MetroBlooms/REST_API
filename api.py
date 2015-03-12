@@ -109,7 +109,6 @@ def get_resource():
 
     evaluation = json['site']['evaluation']
 
-
     # insert into tables
     a = Address(address = address["address"],
                 city = address["address"],
