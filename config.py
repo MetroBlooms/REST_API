@@ -8,8 +8,8 @@ WTF_CSRF_ENABLED = True
 SECRET_KEY = '123456790'
 
 # db connection string to postgres
-#SQLALCHEMY_DATABASE_URI = 'postgres://test:test@localhost/test'
-SQLALCHEMY_DATABASE_URI = 'mysql://gms:test@localhost/test'
+SQLALCHEMY_DATABASE_URI = 'postgres://test:test@localhost/test'
+#SQLALCHEMY_DATABASE_URI = 'mysql://gms:test@localhost/nestedSetsPOC'
 SQLALCHEMY_ECHO = True
 
 # Flask-Mail configuration

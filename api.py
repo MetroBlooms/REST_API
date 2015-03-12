@@ -33,6 +33,7 @@ Geoposition = models.Geoposition
 Evaluation = models.Evaluation
 Person = models.Person
 
+mode = 'test' # live or test for use in debugging
 
 @app.route("/")
 def index():
@@ -94,30 +95,19 @@ def get_resource():
     # submitted via Ajax request
     json = request.json
 
-    # print entire object
-    print json['site']
-
     # define dictionary item for entire object
     site = json['site']
-    print site["site_name"]
-
-    # print address object
-    print site['address']
 
     # define address dictionary object
     address = json['site']['address']
-    print address["address"]
 
     # define geolocation dictionary object
     geolocation = json['site']['geolocation']
-    print geolocation["accuracy"]
 
     # define person dictionary object
     person = json['site']['person']
-    print person["first_name"]
 
     evaluation = json['site']['evaluation']
-    print evaluation["comments"]
 
 
     # insert into tables
@@ -145,6 +135,16 @@ def get_resource():
              evaluations = [e])
 
 
+    if mode == 'test':
+        # print entire object
+        print json['site']
+        print site["site_name"]
+        print site['address']
+        print address["address"]
+        print geolocation["accuracy"]
+        print person["first_name"]
+        print evaluation["comments"]
+
     db.session.add(a)
     db.session.add(g)
     db.session.add(p)
@@ -152,9 +152,10 @@ def get_resource():
     db.session.add(s)
     db.session.commit()
 
-    #print s.address.count(address) # 1
-    #print s.address[0] # <Address object at 0x10c098ed0>
-    #print s.address.filter_by(address = address["address"]).count(address) # 1
+    if mode == 'test':
+        print s.address.count(address) # 1
+        print s.address[0] # <Address object at 0x10c098ed0>
+        print s.address.filter_by(address = address["address"]).count(address) # 1
 
     # Render template
     return jsonify(json)
@@ -166,8 +167,10 @@ def get_resource():
 @cross_origin() # allow all origins all methods
 #@auth.login_required
 def get_htsql(criterion):
-    print criterion
-    test = HTSQL("mysql://gms:test@localhost/test")
+    if mode == 'test':
+        print criterion
+    #test = HTSQL("mysql://gms:test@localhost/test")
+    test = HTSQL("pgsql://test:test@localhost/test")
     #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
     rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
 
@@ -221,7 +224,9 @@ def get_htsql(criterion):
     with test:
         text = ''.join(emit('x-htsql/json', rows))
 
-    #print text, rows
+    if mode == 'test':
+        print text, rows
+
     return text
 
 
@@ -231,13 +236,16 @@ def get_htsql(criterion):
 @cross_origin() # allow all origins all methods
 #@auth.login_required
 def get_factor():
-    test = HTSQL("mysql://gms:test@localhost/test")
+    #test = HTSQL("mysql://gms:test@localhost/test")
+    test = HTSQL("pgsql://test:test@localhost/test")
     rows = test.produce("/factor")
 
     with test:
         text = ''.join(emit('x-htsql/json', rows))
 
-    print text, rows
+    if mode == 'test':
+        print text, rows
+
     return text
 
 
