@@ -1,7 +1,6 @@
 #!venv/bin/python
-import os.path
 
-from app import db
+from rest_api.app import db
 
 
 # Create db

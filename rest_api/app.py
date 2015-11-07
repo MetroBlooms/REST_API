@@ -3,8 +3,7 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_mail import Mail
 from flask.ext import restful
-from flask_cors import CORS, cross_origin
-from flask.ext.login import LoginManager
+from flask_cors import CORS
 
 # Define Flask app
 app = Flask(__name__)
@@ -18,7 +17,6 @@ api = restful.Api(app)
 # creatre mail instance
 mail = Mail(app)
 # import models as a subclass
-import models, views
 
 cors = CORS(app, headers="X-Requested-With, Content-Type")
 

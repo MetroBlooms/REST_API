@@ -3,25 +3,16 @@
     This is a typical declarative usage of sqlalchemy,
     It has no dependency on flask or eve itself. Pure sqlalchemy.
 """
-from app import db, app
+from rest_api.app import db
 
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 from passlib.apps import custom_app_context as pwd_context
-from flask.ext.login import LoginManager, UserMixin, login_required
-
-from sqlalchemy.engine import reflection
-from sqlalchemy.engine.reflection import Inspector
+from rest_api import app
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import inspect, join
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref, column_property
-from sqlalchemy.ext import hybrid
-from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.schema import Table
-from sqlalchemy import func
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy import (
     Column,
     Boolean,

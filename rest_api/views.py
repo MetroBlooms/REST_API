@@ -1,12 +1,11 @@
 #http://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 #https://github.com/mrjoes/flask-admin/blob/master/examples/auth/app.py
 
-from flask import render_template, flash, redirect, session, jsonify, request
-from flask.ext.login import LoginManager, login_user, logout_user, current_user, login_required
+from flask import render_template, flash, redirect, session
 from flask.ext import login
-from app import app, db, models
-from forms import LoginForm
-from wtforms import validators
+from rest_api.app import db, models
+from rest_api import app
+from rest_api.forms import LoginForm
 
 User = models.User
 

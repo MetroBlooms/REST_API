@@ -2,21 +2,16 @@
 
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
-import os, json
-from flask import Flask, render_template, abort, request, Response, jsonify, g, url_for, redirect, session
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
-from flask.ext import restful
-from forms import LoginForm
-from flask_mail import Mail
+from flask import abort, request, jsonify, g, url_for, session
+from rest_api import app
+from rest_api.forms import LoginForm
 from htsql import HTSQL
 from htsql.core.fmt.emit import emit
 
 # test
-from flask.ext.login import login_required
 
 # load extensions
-from app import db, app, api, mail, models
+from rest_api.app import db, mail, models
 from flask_cors import cross_origin
 
 
@@ -136,12 +131,18 @@ def get_resource():
 
     if mode == 'test':
         # print entire object
+        print 'site:'
         print json['site']
+        print 'site name:'
         print site["site_name"]
+        print 'address:'
         print site['address']
         print address["address"]
+        print 'geolocation:'
         print geolocation["accuracy"]
+        print 'person:'
         print person["first_name"]
+        print 'comments:'
         print evaluation["comments"]
 
     db.session.add(a)
@@ -151,10 +152,10 @@ def get_resource():
     db.session.add(s)
     db.session.commit()
 
-    if mode == 'test':
-        print s.address.count(address) # 1
-        print s.address[0] # <Address object at 0x10c098ed0>
-        print s.address.filter_by(address = address["address"]).count(address) # 1
+    #if mode == 'test':
+        #print s.address.count(address) # 1
+        #print s.address[0] # <Address object at 0x10c098ed0>
+        #print s.address.filter_by(address = address["address"]).count(address) # 1
 
     # Render template
     return jsonify(json)
@@ -162,19 +163,20 @@ def get_resource():
 
 # test HTSQL
 #  & and | for logical operators
-@app.route('/api/htsql/<criterion>', methods=['GET','POST','OPTIONS'])
+@app.route('/api/htsql/', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
 #@auth.login_required
-def get_htsql(criterion):
-    if mode == 'test':
-        print criterion
+#def get_htsql(criterion):
+def get_htsql():
+    #if mode == 'test':
+    #    print criterion
     #test = HTSQL("mysql://gms:test@localhost/test")
     test = HTSQL("pgsql://test:test@localhost/test")
     #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
-    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
+    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
 
-    test = HTSQL("mysql://gms:test@localhost/test")
-    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?evaluator." + criterion)
+    #test = HTSQL("mysql://gms:test@localhost/test")
+    rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
     # rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
 
 # http://127.0.0.1:8080/evaluation{comments,site{geoposition{id}?latitude=46&longitude%3E47},site{geoposition{accuracy}?latitude=46&longitude%3E47},evaluator{first_name}}?evaluator.first_name='you'/:sql

@@ -1,12 +1,13 @@
 # Author: Gouthaman Balaraman
 # http://gouthamanbalaraman.com/minimal-flask-login-example.html
 
-from flask import Flask, Response
+from flask import Response
 from flask.ext.login import LoginManager, UserMixin, login_required
 from flask_cors import cross_origin
-from app import app
 
 #app = Flask(__name__)
+from rest_api import app
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 
