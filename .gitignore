@@ -2,4 +2,4 @@
 *.bak
 *.pyc
 .idea/*
-venv/*
+rest_api/venv/*

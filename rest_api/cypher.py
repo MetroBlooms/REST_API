@@ -34,13 +34,13 @@ t.push()
 u = gdb.merge_one("Site","name","Grenzi")
 u.push()
 
+# ensure that relationship is not recreated
 gdb.create_unique(Relationship(t, "managedBy", u))
 #MATCH (n { zipcode: '55422' })
 #SET n :Address
 #RETURN n
 
 #MATCH (a:Site { sites: 'The Mothra' }), (b:Address { zipcode: '55422' })
-#:w
 # CREATE (a)-[:is_at]->(b)
 
 

@@ -1,7 +1,7 @@
 from fabric.api import *
 from contextlib import contextmanager
 
-env.directory = '~/development/python/rest-api'
+env.directory = '~/development/python/rest-api/rest_api'
 env.activate = 'source ' + env.directory + '/venv/bin/activate' # use virtual environment to execute commands
 
 # set context manager to use virtualenv
