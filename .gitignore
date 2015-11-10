@@ -1,0 +1,5 @@
+.DS_Store
+*.bak
+*.pyc
+.idea/*
+rest_api/venv/*
