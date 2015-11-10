@@ -20,3 +20,4 @@ SQLAlchemy
 Werkzeug
 itsdangerous
 requests
+py2neo
