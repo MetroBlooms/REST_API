@@ -21,3 +21,4 @@ Werkzeug
 itsdangerous
 requests
 py2neo
+neomodel
