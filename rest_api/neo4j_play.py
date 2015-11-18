@@ -1,4 +1,5 @@
 from py2neo import Graph, Path,  neo4j, node, rel, authenticate, Relationship
+
 from neomodel import (StructuredNode, StringProperty, IntegerProperty,
     RelationshipTo, RelationshipFrom)
 
@@ -10,21 +11,54 @@ authenticate("iznej.local:7474", "neo4j", "bippy")
 gdb = neo4j.Graph("http://iznej.local:7474/db/data/")
 
 #neomodel test
+class ScoreCard(StructuredNode):
+    factor_type = StringProperty(unique_index=False, required=True)#("garden", "rain garden", "permeable pavers")
+    score = IntegerProperty(unique_index=False, required=True)
+
+    site = RelationshipFrom('Evaluation', 'IS_SCORED')
+
+class Evaluation(StructuredNode):
+    type = StringProperty(unique_index=False, required=False)#("garden", "rain garden", "permeable pavers")
+    evaluator_id = IntegerProperty(unique_index=False, required=True)
+    evaluator = StringProperty(unique_index=False, required=True)
+    evaluated_when = StringProperty(unique_index=False, required=True)
+    exists = StringProperty(unique_index=False, required=True)
+    comments = StringProperty(unique_index=False, required=False)
+
+    site = RelationshipFrom('Site', 'IS_EVALUATED')
+    score_card = RelationshipTo(ScoreCard, 'IS_SCORED')
+
 class Site(StructuredNode):
+    #id = IntegerProperty(unique_index=True, required=True)
     name = StringProperty(unique_index=False, required=True)
 
     # traverse incoming IS_FROM relation, inflate to Person objects
     address = RelationshipFrom('Address', 'IS_NAMED')
-
+    geolocation = RelationshipFrom('Geoposition', 'HAS_COORDINATES')
+    evaluation = RelationshipTo(Evaluation, 'IS_EVALUATED')
 
 class Address(StructuredNode):
+    #id = IntegerProperty(unique_index=True, required=True)
     address = StringProperty(unique_index=False, required=True)
     city = StringProperty(unique_index=False, required=True)
     state = StringProperty(unique_index=False, required=True)
     zipcode = StringProperty(unique_index=False, required=True)
+    neighborhood = StringProperty(unique_index=False, required =False)
+    county = StringProperty(unique_index=False, required=False)
 
     # traverse outgoing IS_FROM relations, inflate to Country objects
     site = RelationshipTo(Site, 'IS_NAMED')
+
+class Geoposition(StructuredNode):
+    #id = IntegerProperty(unique_index=True, required=True)
+    latitude = StringProperty(unique_index=False, required=True)
+    longitude = StringProperty(unique_index=False, required=True)
+    accuracy = StringProperty(unique_index=False, required=True)
+    timestamp = StringProperty(unique_index=False, required=True)
+
+    site = RelationshipTo(Site, 'HAS_COORDINATES')
+
+
 
 grez_nez = Address(address='1112 Stufflebeams Road', city='Saintly Pork', state = 'MN', zipcode = '55466').save()
 
@@ -33,8 +67,18 @@ addresses = Address.create(
     {'address':'2900 Winifred Ave N','city':'Gorden Volley','state':'MN','zipcode':'55433'}
 )
 
+# link address to site
 grenzi = Site(name='Grenzi2').save()
 grez_nez.site.connect(grenzi)
+
+# link geolocale to site
+here = Geoposition(latitude='123.456', longitude='789.101112', accuracy = '2', timestamp = 'now').save()
+here.site.connect(grenzi)
+
+# link site to evaluation
+good_site = Evaluation(evaluator_id='123', evaluator= 'me', exists='True', evaluated_when='now', comment='testing 123...').save()
+grenzi.evaluation.connect(good_site)
+
 
 if grez_nez.site.is_connected(grenzi):
     print("Grez and Nez are Grenzi")
