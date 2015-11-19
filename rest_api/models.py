@@ -1,168 +1,58 @@
 """
-    SQL tables.
-    This is a typical declarative usage of sqlalchemy,
-    It has no dependency on flask or eve itself. Pure sqlalchemy.
+
+        neo4j model declarations
+
 """
-from rest_api.app import db
 
-from itsdangerous import (TimedJSONWebSignatureSerializer
-                          as Serializer, BadSignature, SignatureExpired)
+from neomodel import (StructuredNode, StringProperty, IntegerProperty,
+    RelationshipTo, RelationshipFrom)
 
-from passlib.apps import custom_app_context as pwd_context
-from rest_api import app
+from app import app
 
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, backref
-from sqlalchemy import (
-    Column,
-    Boolean,
-    String,
-    Integer,
-    Float,
-    ForeignKey,
-    DateTime,
-    Enum)
+#neomodel test
+class ScoreCard(StructuredNode):
+    factor_type = StringProperty(unique_index=False, required=True)#("garden", "rain garden", "permeable pavers")
+    score = IntegerProperty(unique_index=False, required=True)
 
-Base = declarative_base()
-Base.metadata.bind = db.engine
+    site = RelationshipFrom('Evaluation', 'IS_SCORED')
 
+class Evaluation(StructuredNode):
+    type = StringProperty(unique_index=False, required=False)#("garden", "rain garden", "permeable pavers")
+    evaluator_id = IntegerProperty(unique_index=False, required=True)
+    evaluator = StringProperty(unique_index=False, required=True)
+    evaluated_when = StringProperty(unique_index=False, required=True)
+    exists = StringProperty(unique_index=False, required=True)
+    comments = StringProperty(unique_index=False, required=False)
 
-class User(db.Model, UserMixin):
-    __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(32), index=True)
-    password_hash = db.Column(db.String(128))
-    person_id = Column(Integer, ForeignKey('person.id'))
-    person = relationship("Person", backref=backref("user", uselist=False))
- #   roles = relationship("Role", secondary=lambda: user_roles, backref="user")
+    site = RelationshipFrom('Site', 'IS_EVALUATED')
+    score_card = RelationshipTo(ScoreCard, 'IS_SCORED')
 
-    def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
+class Site(StructuredNode):
+    #id = IntegerProperty(unique_index=True, required=True)
+    name = StringProperty(unique_index=False, required=True)
 
-    def verify_password(self, password):
-        return pwd_context.verify(password, self.password_hash)
+    # traverse incoming IS_FROM relation, inflate to Person objects
+    address = RelationshipFrom('Address', 'IS_NAMED')
+    geolocation = RelationshipFrom('Geoposition', 'HAS_COORDINATES')
+    evaluation = RelationshipTo(Evaluation, 'IS_EVALUATED')
 
-    def generate_auth_token(self, expiration = 3600): # set expiration to 1 hour
-        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
-        return s.dumps({ 'id': self.id })
+class Address(StructuredNode):
+    #id = IntegerProperty(unique_index=True, required=True)
+    address = StringProperty(unique_index=False, required=True)
+    city = StringProperty(unique_index=False, required=True)
+    state = StringProperty(unique_index=False, required=True)
+    zipcode = StringProperty(unique_index=False, required=True)
+    neighborhood = StringProperty(unique_index=False, required =False)
+    county = StringProperty(unique_index=False, required=False)
 
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None # valid token, but expired
-        except BadSignature:
-            return None # invalid token
-        user = User.query.get(data['id'])
-        return user
+    # traverse outgoing IS_FROM relations, inflate to Country objects
+    site = RelationshipTo(Site, 'IS_NAMED')
 
-    def is_authenticated(self):
-        return True
+class Geoposition(StructuredNode):
+    #id = IntegerProperty(unique_index=True, required=True)
+    latitude = StringProperty(unique_index=False, required=True)
+    longitude = StringProperty(unique_index=False, required=True)
+    accuracy = StringProperty(unique_index=False, required=True)
+    timestamp = StringProperty(unique_index=False, required=True)
 
-    def is_active(self):
-        return True
-
-    def is_anonymous(self):
-        return False
-
-    def get_id(self):
-        try:
-            return unicode(self.id)  # python 2
-        except NameError:
-            return str(self.id)  # python 3
-
-    def __repr__(self):
-        return '<User %r>' % (self.username)
-
-
-class Address(db.Model):
-    __tablename__ = 'address'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    address = Column(String(80))
-    city = Column(String(80))
-    state = Column(String(2))
-    zip = Column(String(5))
-    neighborhood =  Column(String(80))
-    county = Column(String(80))
-    #site_id = Column(Integer, ForeignKey('site.id'))
-
-
-class Geoposition(db.Model):
-    __tablename__ = 'geoposition'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    latitude = Column(Float(20))
-    longitude = Column(Float(20))
-    accuracy = Column(Float(20))
-    timestamp = Column(DateTime)
-    #site_id = Column(Integer, ForeignKey('site.id'))
-
-class Site(db.Model):
-    __tablename__ = 'site'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    site_name  = Column(String(80))# does site have a formal name
-    address_id = Column(Integer, ForeignKey('address.id'))
-    address = relationship("Address", backref=backref("site", uselist=False))
-    geoposition_id = Column(Integer, ForeignKey('geoposition.id'))
-    geoposition = relationship("Geoposition", backref=backref("site", uselist=False))
-    evaluations = relationship("Evaluation", backref="site")
-    site_maintainers = relationship("SiteMaintainer", backref="site")
-
-
-class Evaluation(db.Model):
-    __tablename__ = 'evaluation'
-    id  = Column(Integer, primary_key=True, autoincrement=True)
-    evaluator_id = Column(Integer, ForeignKey('person.id'))
-    evaluator = relationship("Person", backref=backref("evaluation", uselist=False))
-    evaluated_when = Column(DateTime)
-    exists = Column(Boolean)# does site exist at time of evaluation
-    comments = Column(String(80))
-    site_id = Column(Integer, ForeignKey('site.id'))
-
-
-class Person(db.Model):
-    __tablename__ = 'person'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    first_name = Column(String(20))
-    middle_name = Column(String(15))
-    last_name = Column(String(15))
-    email_id = Column(Integer, ForeignKey('email.id'))
-    email = relationship("Email", backref=backref("person", uselist=False))
-    address_id = Column(Integer, ForeignKey('address.id'))
-    address = relationship("Address", backref=backref("person", uselist=False))
-    phone_id = Column(Integer, ForeignKey('phone.id'))
-    phone = relationship("Phone", backref=backref("person", uselist=False))
-    type = Column(Enum("evaluator", "site maintainer", name="person_types"))
-
-
-class SiteMaintainer(db.Model):
-    __tablename__ = 'site_maintainer'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    site_id = Column(Integer, ForeignKey('site.id'))
-    person_id = Column(Integer, ForeignKey('person.id'))
-    person = relationship("Person", backref=backref("site_maintainer", uselist=False))
-
-
-class Phone(db.Model):
-    __tablename__ = 'phone'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    exchange = Column(String(10))
-    type = Column(Enum("mobile", "business", "home", name = "phone_types"))
-
-
-class Email(db.Model):
-    __tablename__ = 'email'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    address = Column(String(80))# need validator
-
-# now the fun begins:
-
-# evaluation instrument items
-class Factor(db.Model):
-    __tablename__ = 'factor'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))
-    description = Column(String(80))# instrument item description
-    result = Column(String(80))# instrument item value outcome
-
+    site = RelationshipTo(Site, 'HAS_COORDINATES')
