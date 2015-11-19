@@ -18,45 +18,46 @@ Geoposition = models.Geoposition
 Evaluation = models.Evaluation
 
 
+# auth for py2neo
 authenticate("iznej.local:7474", "neo4j", "bippy")
 gdb = neo4j.Graph("http://iznej.local:7474/db/data/")
 
-
-grez_nez = Address(address='1112 Stufflebeams Road', city='Saintly Pork', state = 'MN', zipcode = '55466').save()
+# create model instance
+home = Address(address='1112 Stufflebeams Road', city='Saintly Park', state = 'MN', zipcode = '55466').save()
 
 addresses = Address.create(
-    {'address':'1218 N Oak Lane','city':'The Pork','state':'MN','zipcode': '55411'},
+    {'address':'1218 N Oak Lane','city':'The Park','state':'MN','zipcode': '55411'},
     {'address':'2900 Winifred Ave N','city':'Gorden Volley','state':'MN','zipcode':'55433'}
 )
 
 # link address to site
 grenzi = Site(name='Grenzi2').save()
-grez_nez.site.connect(grenzi)
+home.site.connect(grenzi)
 
 # link geolocale to site
 here = Geoposition(latitude='123.456', longitude='789.101112', accuracy = '2', timestamp = 'now').save()
 here.site.connect(grenzi)
 
 # link site to evaluation
-good_site = Evaluation(evaluator_id='123', evaluator= 'me', exists='True', evaluated_when='now', comment='testing 123...').save()
-grenzi.evaluation.connect(good_site)
+inspection = Evaluation(evaluator_id='123', evaluator= 'me', exists='True', evaluated_when='now', comment='testing 123...').save()
+grenzi.evaluation.connect(inspection)
 
-
-if grez_nez.site.is_connected(grenzi):
+if home.site.is_connected(grenzi):
     print("Grez and Nez are Grenzi")
 
 for s in grenzi.address.all():
-    print(s.address) # Jim
+    print(s.address)
 
-len(grenzi.address) # 1
+len(grenzi.address)
 print grenzi.name
 
-# Find people called 'Jim' in germany
+# return site name
 grenzi.address.search(address='1112 Stufflebeams Road')
 
-#grez_nez.site.disconnect(grenzi)
+#home.site.disconnect(grenzi)
 
 
+#py2neo test
 #FOREACH (addresses IN [{'address':'1218 N Oak Lane','city':'The Pork','state':'MN','zipcode': '55411'}, {'address':'2900 Winifred Ave N','city':'Gorden Volley','state':'MN','zipcode':'55433'}]|
 #         CREATE ({ address:addresses.address,city:addresses.city,state:addresses.state,zipcode:addresses.zipcode }))
 
@@ -73,7 +74,6 @@ grenzi.address.search(address='1112 Stufflebeams Road')
 #    {"name": "Grenzi1"}, {"name": "Mothra1"}
 #)
 
-#py2neo test
 # create multiple nodes
 # addresses = gdb.merge(
 #     {'address':'1218 N Oak Lane','city':'The Pork','state':'MN','zipcode': '55411'},
