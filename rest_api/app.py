@@ -11,13 +11,11 @@ app.config.from_object('config')
 #db = SQLAlchemy(app)
 
 # import models as a subclass
-import models
+import models, sqlModels
 
 # create api isntance
 api = restful.Api(app)
 
-# creatre mail instance
-mail = Mail(app)
 # import models as a subclass
 
 cors = CORS(app, headers="X-Requested-With, Content-Type")
