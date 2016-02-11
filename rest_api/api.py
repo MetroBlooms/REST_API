@@ -11,7 +11,7 @@ from htsql.core.fmt.emit import emit
 # test
 
 # load extensions
-from rest_api.app import db, mail, models
+from app import db, models
 from flask_cors import cross_origin
 
 
