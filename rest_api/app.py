@@ -11,7 +11,7 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 # import models as a subclass
-import models, sqlModels
+import sqlModels as models, neo4jModels
 
 # create api isntance
 api = restful.Api(app)

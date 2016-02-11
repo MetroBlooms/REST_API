@@ -3,8 +3,7 @@ from py2neo import Graph, Path,  neo4j, node, rel, authenticate, Relationship
 from neomodel import (StructuredNode, StringProperty, IntegerProperty,
     RelationshipTo, RelationshipFrom)
 
-from app import app, models
-
+from app import app, neo4jModels as models
 
 # TODO: set as environment variable for consumption by neomodel
 #import os
