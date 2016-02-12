@@ -11,7 +11,7 @@ from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 # test
 
 # load extensions
-from  app import app, db, sql_models
+from  app import app, db, sql_models as models
 from flask_cors import cross_origin
 
 
@@ -19,14 +19,14 @@ auth = HTTPBasicAuth()
 #auth = HTTPDigestAuth()
 
 # Classes used in API calls
-User = sql_models.User
-Person = sql_models.Person
-Evaluation = sql_models.Evaluation
-Address = sql_models.Address
-Site = sql_models.Site
-Geoposition = sql_models.Geoposition
-Evaluation = sql_models.Evaluation
-Person = sql_models.Person
+User = models.User
+Person = models.Person
+Evaluation = models.Evaluation
+Address = models.Address
+Site = models.Site
+Geoposition = models.Geoposition
+Evaluation = models.Evaluation
+Person = models.Person
 
 mode = 'test' # live or test for use in debugging
 

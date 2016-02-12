@@ -7,6 +7,7 @@ import neo4j_models as models
 
 # TODO: set as environment variable for consumption by neomodel
 # at command prompt 'export NEO4J_REST_URL=http://neo4j:bippy@iznej.local:7474/db/data/'
+# without this you will get a connection refused error
 # note that iznej.local is the URL to my local instance of neo4j
 # --->
 # below solution does not work. need to figure this out!!!
