@@ -1,5 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
+from flask.ext.login import LoginManager, UserMixin, login_required
 from sqlalchemy import (
     Column,
     Boolean,
@@ -14,9 +15,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 from passlib.apps import custom_app_context as pwd_context
-from rest_api import app
-
-from rest_api.app import db
+from  app import app, db
 
 Base = declarative_base()
 Base.metadata.bind = db.engine

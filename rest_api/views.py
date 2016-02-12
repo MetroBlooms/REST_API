@@ -3,11 +3,10 @@
 
 from flask import render_template, flash, redirect, session
 from flask.ext import login
-from rest_api.app import db, models
-from rest_api import app
-from rest_api.forms import LoginForm
+from app import app, db, sql_models
+from forms import LoginForm
 
-User = models.User
+User = sql_models.User
 
 
 # intialize Flask-login

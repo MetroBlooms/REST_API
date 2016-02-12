@@ -1,11 +1,7 @@
 Fabric
 Flask
-Flask-Admin
 flask-cors
 Flask-Httpauth
-Flask-Mail
-Flask-Restless
-Flask-Restful
 Flask-SQLAlchemy
 Flask-Security
 Flask-WTF

@@ -7,8 +7,6 @@
 from neomodel import (StructuredNode, StringProperty, IntegerProperty,
     RelationshipTo, RelationshipFrom)
 
-from app import app
-
 #neomodel test
 class ScoreCard(StructuredNode):
     factor_type = StringProperty(unique_index=False, required=True)#("garden", "rain garden", "permeable pavers")
