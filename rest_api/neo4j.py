@@ -6,6 +6,10 @@ from neomodel import (StructuredNode, StringProperty, IntegerProperty,
 import neo4j_models as models
 
 # TODO: set as environment variable for consumption by neomodel
+# at command prompt 'export NEO4J_REST_URL=http://neo4j:bippy@iznej.local:7474/db/data/'
+# note that iznej.local is the URL to my local instance of neo4j
+# --->
+# below solution does not work. need to figure this out!!!
 #import os
 #os.system("export NEO4J_REST_URL=http://neo4j:bippy@iznej.local:7474/db/data/")
 
@@ -18,6 +22,7 @@ Evaluation = models.Evaluation
 
 
 # auth for py2neo
+# set URL and credentials as per your own local setup
 authenticate("iznej.local:7474", "neo4j", "bippy")
 gdb = neo4j.Graph("http://iznej.local:7474/db/data/")
 
