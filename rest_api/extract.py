@@ -2,7 +2,6 @@ from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy.sql import and_
 
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import (
     Column,
@@ -11,8 +10,7 @@ from sqlalchemy import (
     Integer,
     Float,
     ForeignKey,
-    DateTime,
-    Enum)
+    DateTime)
 
 import tempfile
 import os
@@ -22,16 +20,13 @@ import pandas as pd
 
 from phpserialize import unserialize
 
-
 # from app import app, db
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
-Base = declarative_base()
-Base.metadata.bind = db.engine
-
-
+# data tables
+# TODO: give more succinct class names
 class Geolocation(db.Model):
     __tablename__ = 'geolocation'
     geo_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -83,6 +78,8 @@ class Person(db.Model):
 '''
 
 '''
+SQL Query:
+
 use metroblo_website;
 
 SELECT  latitude,
@@ -105,6 +102,7 @@ where completed = 1 AND scoresheet is not null
 
 '''
 
+# create SQLAlchemy query object
 query = db.session.query(Gardenevals_gardens.address,
                          Gardenevals_gardens.city,
                          Gardenevals_gardens.zip,
@@ -125,18 +123,8 @@ query = db.session.query(Gardenevals_gardens.address,
                 Gardenevals_evaluation.scoresheet != None,
                 Gardenevals_gardens.raingarden == 1))
 
-'''
-out = []
-for result in query:
-            data = {'geo_id': result.address}
 
-            out.append(data)
-
-print out[1:20]
-'''
-
-test = pd.read_sql(query.statement, query.session.bind)
-
-frame  = pd.DataFrame(test)
+# get data set as pandas frame
+frame = pd.read_sql(query.statement, query.session.bind)
 
 print frame
