@@ -1,5 +1,6 @@
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import and_
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
@@ -13,31 +14,14 @@ from sqlalchemy import (
     DateTime,
     Enum)
 
-from itsdangerous import (TimedJSONWebSignatureSerializer
-                          as Serializer, BadSignature, SignatureExpired)
+import tempfile
+import os
+os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 
-'''
-use metroblo_website;
+import pandas as pd
 
-SELECT  latitude,
-longitude,
-accuracy,
-address,
-city,
-zip,
-raingarden,
-scoresheet,
-score,
-eval_type,
-rating,
-comments,
-date_evaluated
-FROM gardenevals_evaluations eval
-left outer join (gardenevals_gardens garden, geolocation geo)
-on (garden.garden_id = eval.garden_id AND garden.geo_id = geo.geo_id)
-where completed = 1 AND scoresheet is not null
+from phpserialize import unserialize
 
-'''
 
 # from app import app, db
 app = Flask(__name__)
@@ -62,11 +46,12 @@ class Gardenevals_evaluation(db.Model):
     garden_id = Column(Integer, ForeignKey('gardenevals_gardens.garden_id'))
     eval_type = Column(String(80))
     scoresheet = Column(String(80))
+    completed = Column(Boolean)
     score = Column(Integer)
     rating = Column(String(2))
     evaluator_id = Column(Integer, ForeignKey('garden_evaluators.evaluator_id'))
     evaluator = relationship("Garden_evaluators", backref=backref("evaluation", uselist=False))
-    date_evaluate = Column(DateTime)
+    date_evaluated = Column(DateTime)
     comments = Column(String(80))
 
 class Gardenevals_gardens(db.Model):
@@ -77,10 +62,16 @@ class Gardenevals_gardens(db.Model):
     city = Column(String(80))
     state = Column(String(2))
     zip = Column(String(5))
+    raingarden = Column(Boolean)
     neighborhood =  Column(String(80))
     county = Column(String(80))
     geoposition = relationship("Geolocation", backref=backref("site", uselist=False))
     evaluations = relationship("Gardenevals_evaluation", backref="site")
+
+class Garden_evaluators(db.Model):
+    __tablename__ = 'garden_evaluators'
+    evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer)
 
 '''
 class Person(db.Model):
@@ -91,21 +82,61 @@ class Person(db.Model):
     email = Column(String)
 '''
 
-class Garden_evaluators(db.Model):
-    __tablename__ = 'garden_evaluators'
-    evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer)
+'''
+use metroblo_website;
 
+SELECT  latitude,
+longitude,
+accuracy,
+address,
+city,
+zip,
+raingarden,
+scoresheet,
+score,
+eval_type,
+rating,
+comments,
+date_evaluated
+FROM gardenevals_evaluations eval
+left outer join (gardenevals_gardens garden, geolocation geo)
+on (garden.garden_id = eval.garden_id AND garden.geo_id = geo.geo_id)
+where completed = 1 AND scoresheet is not null
 
+'''
 
-query = db.session.query(Geolocation)
+query = db.session.query(Gardenevals_gardens.address,
+                         Gardenevals_gardens.city,
+                         Gardenevals_gardens.zip,
+                         Gardenevals_evaluation.scoresheet,
+                         Gardenevals_evaluation.score,
+                         Gardenevals_evaluation.rating,
+                         Geolocation.latitude,
+                         Geolocation.longitude,
+                         Geolocation.accuracy,
+                         Gardenevals_gardens.raingarden,
+                         Gardenevals_evaluation.eval_type,
+                         Gardenevals_evaluation.comments,
+                         Gardenevals_evaluation.date_evaluated,
+                         Gardenevals_evaluation.evaluator_id).\
+    join(Gardenevals_evaluation, Gardenevals_gardens.garden_id == Gardenevals_evaluation.garden_id).\
+    outerjoin(Geolocation, Geolocation.geo_id == Gardenevals_gardens.geo_id).\
+    filter(and_(Gardenevals_evaluation.completed == 1,
+                Gardenevals_evaluation.scoresheet != None,
+                Gardenevals_gardens.raingarden == 1))
 
+'''
 out = []
 for result in query:
-            data = {'geo_id': result.geo_id}
+            data = {'geo_id': result.address}
 
             out.append(data)
 
+print out[1:20]
+'''
 
-print 'OUT'
-print out
+test = pd.read_sql(query.statement, query.session.bind)
+
+frame  = pd.DataFrame(test)
+
+print frame
