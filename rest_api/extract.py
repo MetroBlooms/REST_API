@@ -123,22 +123,31 @@ query = db.session.query(Site.address,
     outerjoin(Geolocation, Geolocation.geo_id == Site.geo_id).\
     filter(and_(Evaluation.completed == 1,
                 Evaluation.scoresheet != None,
-                Site.raingarden == 1))
+                Site.raingarden == 1,
+                Geolocation.latitude != None,
+                Geolocation.latitude > 0))
 
 # serialize query output as list of dictionaries; convert scoresheet from php array object to list of dictionaries
 out = []
 for result in query:
-            data = {'php_serialization': result.scoresheet,
+            data = {'address': result.address,
                     'jsonified': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
 
             out.append(data)
 
-print out[1:2]
-print out[100:101]
-print out[300:301]
-print out[700:701]
+print 'data:'
+print out
 
-# get data set as pandas frame for manipulation
+table = pd.DataFrame(out)
+count = table.address.nunique()
+
+print 'n:'
+print count
+#print out[100:101]
+#print out[300:301]
+#print out[700:701]
+
+# get data set as pandas data frame for manipulation
 
 #frame = pd.read_sql(query.statement, query.session.bind)
 
