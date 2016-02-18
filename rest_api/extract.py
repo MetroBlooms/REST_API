@@ -127,7 +127,8 @@ query = db.session.query(Site.address,
 # serialize query output as list of dictionaries; convert scoresheet from php array object to list of dictionaries
 out = []
 for result in query:
-            data = {'jsonified': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
+            data = {'php_serialization': result.scoresheet,
+                    'jsonified': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
 
             out.append(data)
 
