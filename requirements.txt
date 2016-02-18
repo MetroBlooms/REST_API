@@ -19,3 +19,4 @@ py2neo
 neomodel
 pandas
 phpserialize
+simplejson

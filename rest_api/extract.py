@@ -19,6 +19,7 @@ os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 import pandas as pd
 
 from phpserialize import unserialize
+import simplejson as json
 
 # from app import app, db
 app = Flask(__name__)
@@ -35,7 +36,7 @@ class Geolocation(db.Model):
     accuracy = Column(Float(20))
     timestamp = Column(DateTime)
 
-class Gardenevals_evaluation(db.Model):
+class Evaluation(db.Model):
     __tablename__ = 'gardenevals_evaluations'
     evaluation_id  = Column(Integer, primary_key=True, autoincrement=True)
     garden_id = Column(Integer, ForeignKey('gardenevals_gardens.garden_id'))
@@ -45,11 +46,11 @@ class Gardenevals_evaluation(db.Model):
     score = Column(Integer)
     rating = Column(String(2))
     evaluator_id = Column(Integer, ForeignKey('garden_evaluators.evaluator_id'))
-    evaluator = relationship("Garden_evaluators", backref=backref("evaluation", uselist=False))
+    evaluator = relationship("Site_evaluators", backref=backref("evaluation", uselist=False))
     date_evaluated = Column(DateTime)
     comments = Column(String(80))
 
-class Gardenevals_gardens(db.Model):
+class Site(db.Model):
     __tablename__ = 'gardenevals_gardens'
     garden_id = Column(Integer, primary_key=True, autoincrement=True)
     geo_id = Column(Integer, ForeignKey('geolocation.geo_id'))
@@ -61,9 +62,9 @@ class Gardenevals_gardens(db.Model):
     neighborhood =  Column(String(80))
     county = Column(String(80))
     geoposition = relationship("Geolocation", backref=backref("site", uselist=False))
-    evaluations = relationship("Gardenevals_evaluation", backref="site")
+    evaluations = relationship("Evaluation", backref="site")
 
-class Garden_evaluators(db.Model):
+class Evaluator(db.Model):
     __tablename__ = 'garden_evaluators'
     evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer)
@@ -103,28 +104,40 @@ where completed = 1 AND scoresheet is not null
 '''
 
 # create SQLAlchemy query object
-query = db.session.query(Gardenevals_gardens.address,
-                         Gardenevals_gardens.city,
-                         Gardenevals_gardens.zip,
-                         Gardenevals_evaluation.scoresheet,
-                         Gardenevals_evaluation.score,
-                         Gardenevals_evaluation.rating,
+query = db.session.query(Site.address,
+                         Site.city,
+                         Site.zip,
+                         Evaluation.scoresheet,
+                         Evaluation.score,
+                         Evaluation.rating,
                          Geolocation.latitude,
                          Geolocation.longitude,
                          Geolocation.accuracy,
-                         Gardenevals_gardens.raingarden,
-                         Gardenevals_evaluation.eval_type,
-                         Gardenevals_evaluation.comments,
-                         Gardenevals_evaluation.date_evaluated,
-                         Gardenevals_evaluation.evaluator_id).\
-    join(Gardenevals_evaluation, Gardenevals_gardens.garden_id == Gardenevals_evaluation.garden_id).\
-    outerjoin(Geolocation, Geolocation.geo_id == Gardenevals_gardens.geo_id).\
-    filter(and_(Gardenevals_evaluation.completed == 1,
-                Gardenevals_evaluation.scoresheet != None,
-                Gardenevals_gardens.raingarden == 1))
+                         Site.raingarden,
+                         Evaluation.eval_type,
+                         Evaluation.comments,
+                         Evaluation.date_evaluated,
+                         Evaluation.evaluator_id).\
+    join(Evaluation, Site.garden_id == Evaluation.garden_id).\
+    outerjoin(Geolocation, Geolocation.geo_id == Site.geo_id).\
+    filter(and_(Evaluation.completed == 1,
+                Evaluation.scoresheet != None,
+                Site.raingarden == 1))
 
+# serialize query output as list of dictionaries; convert scoresheet from php array object to list of dictionaries
+out = []
+for result in query:
+            data = {'jsonified': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
 
-# get data set as pandas frame
-frame = pd.read_sql(query.statement, query.session.bind)
+            out.append(data)
 
-print frame
+print out[1:2]
+print out[100:101]
+print out[300:301]
+print out[700:701]
+
+# get data set as pandas frame for manipulation
+
+#frame = pd.read_sql(query.statement, query.session.bind)
+
+#print frame
