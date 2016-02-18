@@ -17,6 +17,7 @@ import os
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 
 import pandas as pd
+pd.set_option('display.width', 1000)
 
 from phpserialize import unserialize
 import simplejson as json
