@@ -20,3 +20,4 @@ neomodel
 pandas
 phpserialize
 simplejson
+numexpr

@@ -5,7 +5,7 @@ from flask_cors import CORS
 
 # Define Flask app
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_object('rest_api.config')
 db = SQLAlchemy(app)
 
 # import models as a subclass
