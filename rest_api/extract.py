@@ -123,11 +123,13 @@ out.groupby(['latitude','longitude','accuracy']).size()
 out.groupby(['latitude','longitude','accuracy','raingarden']).size()
 out.groupby(['garden_id','raingarden']).size()
 
+# basic analytics on data set:
+
 # total sites
 len(out.garden_id)
 print out[(out.raingarden == 1)].groupby('raingarden').size()
 
-# site w/ rian gardens
+# site w/ rain gardens
 len(out[(out.raingarden == 1)].groupby('garden_id').size())
 
 # rain gardens by city
