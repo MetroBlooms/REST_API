@@ -81,6 +81,8 @@ query = db.session.query(Site.address,
     outerjoin(Geoposition, Geoposition.geo_id == Site.geo_id)
 
 '''
+    Criteria to restrict SQLA object. Instead, we grab whole dataset for use in manipulation in Pandas df:
+
     filter(and_(Evaluation.completed == 1,
                 Evaluation.scoresheet != None,
                 Site.raingarden == 1,
@@ -88,7 +90,10 @@ query = db.session.query(Site.address,
                 Geolocation.latitude > 0))
 
 
-# serialize query output as list of dictionaries; convert scoresheet from php array object to list of dictionaries
+# serialize SQLA query output as list of dictionaries; convert scoresheet from php array object to list of dictionaries
+# TODO: will need to extract individual elements from scoresheet for use in analysis
+#
+
 out = []
 for result in query:
             data = {'address': result.address,
@@ -105,8 +110,8 @@ table = pd.DataFrame(out)
 count = table.address.nunique()
 '''
 
+# grab SQLA query output directly into Pandas dataframe
 out = pd.read_sql(query.statement, query.session.bind, columns = list('raingardenratingyear'))
-
 
 # example queries:
 print out.info()
