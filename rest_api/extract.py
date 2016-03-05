@@ -46,7 +46,7 @@ select  latitude,
     comments,
     date_evaluated
 from gardenevals_evaluations eval
-left outer join (gardenevals_gardens garden, geolocation geo)
+left evaluationser join (gardenevals_gardens garden, geolocation geo)
 on (garden.garden_id = eval.garden_id AND garden.geo_id = geo.geo_id)
 where completed = 1 AND scoresheet is not null
 
@@ -59,8 +59,10 @@ raingarden designation:
     Evaluation.comments search for raingarden
 '''
 
-# create SQLAlchemy query object
-query = db.session.query(Site.address,
+# create SQLAlchemy query objects
+
+# Grabs all evaluation data tied to a site
+qEvaluations = db.session.query(Site.address,
                          Site.city,
                          Site.zip,
                          Site.neighborhood,
@@ -77,7 +79,19 @@ query = db.session.query(Site.address,
                          Evaluation.comments,
                          Evaluation.date_evaluated,
                          Evaluation.evaluator_id).\
-    join(Evaluation, Site.garden_id == Evaluation.garden_id).\
+    outerjoin(Evaluation, Site.garden_id == Evaluation.garden_id).\
+    outerjoin(Geoposition, Geoposition.geo_id == Site.geo_id)
+
+# Grabs site specific data
+qSites = db.session.query(Site.garden_id,
+                         Site.address,
+                         Site.city,
+                         Site.zip,
+                         Site.neighborhood,
+                         Geoposition.latitude,
+                         Geoposition.longitude,
+                         Geoposition.accuracy,
+                         Site.raingarden).\
     outerjoin(Geoposition, Geoposition.geo_id == Site.geo_id)
 
 '''
@@ -90,101 +104,122 @@ query = db.session.query(Site.address,
                 Geolocation.latitude > 0))
 
 
-# serialize SQLA query output as list of dictionaries; convert scoresheet from php array object to list of dictionaries
+# serialize SQLA query evaluationsput as list of dictionaries; convert scoresheet from php array object to list of dictionaries
 # TODO: will need to extract individual elements from scoresheet for use in analysis
 #
 
-out = []
+evaluations = []
 for result in query:
             data = {'address': result.address,
                     'jsonified': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
 
-            out.append(data)
+            evaluations.append(data)
 
 print 'data:'
-print out
-print len(out)
+print evaluations
+print len(evaluations)
 
 
-table = pd.DataFrame(out)
+table = pd.DataFrame(evaluations)
 count = table.address.nunique()
 '''
 
-# grab SQLA query output directly into Pandas dataframe
-out = pd.read_sql(query.statement, query.session.bind, columns = list('raingardenratingyear'))
+# grab SQLA query evaluationsput directly into Pandas dataframe
+evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind, columns = list('raingardenratingyear'))
+sites = pd.read_sql(qSites.statement, qSites.session.bind, columns = list('raingardenratingyear'))
 
-# example queries:
-print out.info()
-out[(~out.city.str.lower().str.contains('minnea')) & (~out.city.str.lower().str.contains('mpls')) & (~out.city.str.lower().str.contains('poli'))].groupby('city').size()
-out[~out.latitude.isnull() & out.latitude != 0]
+# example Pandas queries:
+print evaluations.info()
+sites[(~sites.city.str.lower().str.contains('minnea')) &
+            (~sites.city.str.lower().str.contains('mpls')) &
+            (~sites.city.str.lower().str.contains('poli'))].groupby('city').size()
 
-out.groupby(['eval_type','raingarden']).size()
-out.groupby('city').size()
-out.groupby(['city','raingarden']).size()
-out.groupby(['zip','raingarden']).size()
-out.groupby('accuracy').size()
-out.groupby(['latitude','longitude']).size()
-out.groupby(['latitude','longitude','accuracy']).size()
-out.groupby(['latitude','longitude','accuracy','raingarden']).size()
-out.groupby(['garden_id','raingarden']).size()
+sites[~sites.latitude.isnull() & sites.latitude != 0]
+
+evaluations.groupby(['eval_type','raingarden']).size()
+sites.groupby('city').size()
+evaluations.groupby(['city','raingarden']).size()
+evaluations.groupby(['zip','raingarden']).size()
+sites.groupby('accuracy').size()
+sites.groupby(['latitude','longitude']).size()
+sites.groupby(['latitude','longitude','accuracy']).size()
+evaluations.groupby(['latitude','longitude','accuracy','raingarden']).size()
+evaluations.groupby(['garden_id','raingarden']).size()
 
 # basic analytics on data set:
 
 # total sites
-len(out.garden_id)
-print out[(out.raingarden == 1)].groupby('raingarden').size()
+print 'total unique sites'
+print len(sites.garden_id)
+
+print 'total sites with identified rain gardens'
+print sites[(sites.raingarden == 1)].groupby('raingarden').size()
 
 # site w/ rain gardens
-len(out[(out.raingarden == 1)].groupby('garden_id').size())
+print len(sites[(sites.raingarden == 1)].groupby('garden_id').size())
 
 # rain gardens by city
-headers = ['city','garden', 'n']
-s = (out.groupby(['city','raingarden']).size(),headers)
-print tabulate(out.groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
-#print tabulate(s, headers, tablefmt="simple")
+headers = ['city','garden']
+s = (sites.groupby(['city','raingarden']).size(),headers)
+print tabulate(sites.groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
+print tabulate(s, headers, tablefmt="simple")
+
+# confounder: eval_type used for evaluations not consistent with raingarden flag
+print evaluations.pivot_table(index=["city"], columns=["eval_type"],values='raingarden',aggfunc=np.count_nonzero)
 
 # city versus eval ratingyear for rain gardens
-test = out[['raingarden','city','ratingyear']]
+test = evaluations[['raingarden','city','ratingyear']]
 test = test.replace({True: 1, False: 0})
 print test.pivot_table(index=["city"], columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # rating year by rain garden
-test2 = out[['raingarden','ratingyear']]
+test2 = evaluations[['raingarden','ratingyear']]
 test2 = test2.replace({True: 1, False: 0})
 print test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # site versus eval ratingyear for rain gardens
-test3 = out[['raingarden','ratingyear','garden_id']]
+test3 = evaluations[['raingarden','ratingyear','garden_id']]
 test3 = test3.replace({True: 1, False: 0})
 print len(test3[(test3.raingarden == 1)].groupby('garden_id').count())
 
 # unique geo
-print len(out.groupby(['latitude','longitude']).size())
+print len(evaluations.groupby(['latitude','longitude']).size())
 # accuracies
-print out.groupby('accuracy').size()
+print evaluations.groupby('accuracy').size()
 
 # geo by rating year for rain garden
-test4 = out[['raingarden','latitude','longitude','ratingyear']]
+test4 = evaluations[['raingarden','latitude','longitude','ratingyear']]
 test4 = test4.replace({True: 1, False: 0})
 print test4.pivot_table(index=["latitude","longitude"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # score by rating year
-test5 = out[['raingarden','score','ratingyear']]
+test5 = evaluations[['raingarden','score','ratingyear']]
 test5 = test5.replace({True: 1, False: 0})
-print test5.pivot_table(index=["score","score"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
+print test5.pivot_table(index=["score"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # geo by rating year for rain garden
-test6 = out[['raingarden','zip','ratingyear']]
+test6 = evaluations[['raingarden','zip','ratingyear']]
 test6 = test6.replace({True: 1, False: 0})
 print test6.pivot_table(index=["zip"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
-#print out
+#print evaluations
 
-#print out[100:101]
-#print out[300:301]
-#print out[700:701]
+print 'SQL evaluations:'
+print qEvaluations
+
+print '\n'
+print '\n'
+
+print 'SQL sites:'
+print qSites
+
+
+#print evaluations[100:101]
+#print evaluations[300:301]
+#print evaluations[700:701]
 
 # get data set as pandas data frame for manipulation
 
 #frame = pd.read_sql(query.statement, query.session.bind)
 
 #print frame
+
