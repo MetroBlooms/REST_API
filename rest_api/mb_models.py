@@ -1,8 +1,5 @@
 # data tables
 
-from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
-
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import (
     Column,
@@ -13,10 +10,9 @@ from sqlalchemy import (
     ForeignKey,
     DateTime)
 
-from rest_api.app import app, db
-app.config.from_object('rest_api.config')
+from app import db
 
-# TODO: give more succinct class names
+
 class Geoposition(db.Model):
     __tablename__ = 'geolocation'
     geo_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -24,6 +20,7 @@ class Geoposition(db.Model):
     longitude = Column(Float(20))
     accuracy = Column(Float(20))
     timestamp = Column(DateTime)
+
 
 class Evaluation(db.Model):
     __tablename__ = 'gardenevals_evaluations'
@@ -34,10 +31,12 @@ class Evaluation(db.Model):
     completed = Column(Boolean)
     score = Column(Integer)
     rating = Column(String(2))
+    ratingyear = Column(Integer)
     evaluator_id = Column(Integer, ForeignKey('garden_evaluators.evaluator_id'))
     evaluator = relationship("Site_evaluators", backref=backref("evaluation", uselist=False))
     date_evaluated = Column(DateTime)
     comments = Column(String(80))
+
 
 class Site(db.Model):
     __tablename__ = 'gardenevals_gardens'
@@ -52,6 +51,7 @@ class Site(db.Model):
     county = Column(String(80))
     geoposition = relationship("Geolocation", backref=backref("site", uselist=False))
     evaluations = relationship("Evaluation", backref="site")
+
 
 class Evaluator(db.Model):
     __tablename__ = 'garden_evaluators'

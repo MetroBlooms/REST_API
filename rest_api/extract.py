@@ -4,46 +4,48 @@ os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 
 import pandas as pd
 pd.set_option('display.width', 1000)
-import numexpr
+import numpy as np
 
-from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
+#from phpserialize import unserialize
+#import simplejson as json
+import mb_models as models
+from mb_models import db
+from tabulate import tabulate
 
-from phpserialize import unserialize
-import simplejson as json
-import rest_api.mb_models as models
-from rest_api.mb_models import db
 
+'''
+To run from interpreter you must first issue the commands:
+
+import sys
+sys.path.append('absolute path to this file')
+
+'''
 # Classes used in testing
 Evaluation = models.Evaluation
 Site = models.Site
 Geoposition = models.Geoposition
 Evaluation = models.Evaluation
 
-#from app import db
-#app = Flask(__name__)
-#app.config.from_object('rest_api.config')
-#db = SQLAlchemy(app)
 
 '''
 SQL Query:
 
 use metroblo_website;
 
-SELECT  latitude,
-longitude,
-accuracy,
-address,
-city,
-zip,
-raingarden,
-scoresheet,
-score,
-eval_type,
-rating,
-comments,
-date_evaluated
-FROM gardenevals_evaluations eval
+select  latitude,
+    longitude,
+    accuracy,
+    address,
+    city,
+    zip,
+    raingarden,
+    scoresheet,
+    score,
+    eval_type,
+    rating,
+    comments,
+    date_evaluated
+from gardenevals_evaluations eval
 left outer join (gardenevals_gardens garden, geolocation geo)
 on (garden.garden_id = eval.garden_id AND garden.geo_id = geo.geo_id)
 where completed = 1 AND scoresheet is not null
@@ -61,9 +63,12 @@ raingarden designation:
 query = db.session.query(Site.address,
                          Site.city,
                          Site.zip,
+                         Site.neighborhood,
+                         Evaluation.garden_id,
                          Evaluation.scoresheet,
                          Evaluation.score,
                          Evaluation.rating,
+                         Evaluation.ratingyear,
                          Geoposition.latitude,
                          Geoposition.longitude,
                          Geoposition.accuracy,
@@ -100,16 +105,71 @@ table = pd.DataFrame(out)
 count = table.address.nunique()
 '''
 
-out = pd.read_sql(query.statement, query.session.bind)
+out = pd.read_sql(query.statement, query.session.bind, columns = list('raingardenratingyear'))
+
 
 # example queries:
-
-out[(~out.city.str.lower().str.contains('minnea')) & ~out.city.str.lower().str.contains('mpls')]
+print out.info()
+out[(~out.city.str.lower().str.contains('minnea')) & (~out.city.str.lower().str.contains('mpls')) & (~out.city.str.lower().str.contains('poli'))].groupby('city').size()
 out[~out.latitude.isnull() & out.latitude != 0]
+
+out.groupby(['eval_type','raingarden']).size()
 out.groupby('city').size()
+out.groupby(['city','raingarden']).size()
+out.groupby(['zip','raingarden']).size()
 out.groupby('accuracy').size()
+out.groupby(['latitude','longitude']).size()
+out.groupby(['latitude','longitude','accuracy']).size()
+out.groupby(['latitude','longitude','accuracy','raingarden']).size()
+out.groupby(['garden_id','raingarden']).size()
 
+# total sites
+len(out.garden_id)
+print out[(out.raingarden == 1)].groupby('raingarden').size()
 
+# site w/ rian gardens
+len(out[(out.raingarden == 1)].groupby('garden_id').size())
+
+# rain gardens by city
+headers = ['city','garden', 'n']
+s = (out.groupby(['city','raingarden']).size(),headers)
+print tabulate(out.groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
+#print tabulate(s, headers, tablefmt="simple")
+
+# city versus eval ratingyear for rain gardens
+test = out[['raingarden','city','ratingyear']]
+test = test.replace({True: 1, False: 0})
+print test.pivot_table(index=["city"], columns="ratingyear",values='raingarden',aggfunc=np.sum)
+
+# rating year by rain garden
+test2 = out[['raingarden','ratingyear']]
+test2 = test2.replace({True: 1, False: 0})
+print test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum)
+
+# site versus eval ratingyear for rain gardens
+test3 = out[['raingarden','ratingyear','garden_id']]
+test3 = test3.replace({True: 1, False: 0})
+print len(test3[(test3.raingarden == 1)].groupby('garden_id').count())
+
+# unique geo
+print len(out.groupby(['latitude','longitude']).size())
+# accuracies
+print out.groupby('accuracy').size()
+
+# geo by rating year for rain garden
+test4 = out[['raingarden','latitude','longitude','ratingyear']]
+test4 = test4.replace({True: 1, False: 0})
+print test4.pivot_table(index=["latitude","longitude"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
+
+# score by rating year
+test5 = out[['raingarden','score','ratingyear']]
+test5 = test5.replace({True: 1, False: 0})
+print test5.pivot_table(index=["score","score"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
+
+# geo by rating year for rain garden
+test6 = out[['raingarden','zip','ratingyear']]
+test6 = test6.replace({True: 1, False: 0})
+print test6.pivot_table(index=["zip"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 #print out
 
 #print out[100:101]
