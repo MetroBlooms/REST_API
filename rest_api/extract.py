@@ -153,6 +153,14 @@ evaluations.groupby(['garden_id','raingarden']).size()
 '''
 
 # basic analytics on data set:
+print 'Script: extract.py'
+print 'DataSource: metroblo_website'
+print 'RunDate: 6−mar−2016'
+print 'RunBy: gregsilverman'
+
+print '−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−'
+print 'Summary of MetroBlooms MySQL database:'
+print '−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−'
 
 # total sites
 print 'Total Unique Sites'
