@@ -124,12 +124,16 @@ table = pd.DataFrame(evaluations)
 count = table.address.nunique()
 '''
 
+
 # grab SQLA query evaluationsput directly into Pandas dataframe
 evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind, columns = list('raingardenratingyear'))
 sites = pd.read_sql(qSites.statement, qSites.session.bind, columns = list('raingardenratingyear'))
 
 # example Pandas queries:
 print evaluations.info()
+print sites.info()
+
+'''
 sites[(~sites.city.str.lower().str.contains('minnea')) &
             (~sites.city.str.lower().str.contains('mpls')) &
             (~sites.city.str.lower().str.contains('poli'))].groupby('city').size()
@@ -146,58 +150,87 @@ sites.groupby(['latitude','longitude','accuracy']).size()
 evaluations.groupby(['latitude','longitude','accuracy','raingarden']).size()
 evaluations.groupby(['garden_id','raingarden']).size()
 
+'''
+
 # basic analytics on data set:
 
 # total sites
-print 'total unique sites'
-print len(sites.garden_id)
+print 'Total Unique Sites'
+print sites.garden_id.nunique()
+print evaluations.garden_id.nunique()
 
-print 'total sites with identified rain gardens'
+print 'Total Sites with Identified BMP'
 print sites[(sites.raingarden == 1)].groupby('raingarden').size()
 
 # site w/ rain gardens
 print len(sites[(sites.raingarden == 1)].groupby('garden_id').size())
 
 # rain gardens by city
+print 'Total BMP by City'
 headers = ['city','garden']
 s = (sites.groupby(['city','raingarden']).size(),headers)
 print tabulate(sites.groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
 print tabulate(s, headers, tablefmt="simple")
 
 # confounder: eval_type used for evaluations not consistent with raingarden flag
+print 'Issue with Identifying Raingarden'
 print evaluations.pivot_table(index=["city"], columns=["eval_type"],values='raingarden',aggfunc=np.count_nonzero)
 
-# city versus eval ratingyear for rain gardens
+# number of evaluators
+print 'Total Evaluators'
+print evaluations.evaluator_id.nunique()
+
+# mobile evaluations:
+print 'Total Mobile Evaluations'
+test7 = evaluations[['comments']]
+test7 = test7.replace({True: 1, False: 0})
+print len(test7[(test7.comments.str.lower().str.contains('mobile') == 1)])
+
+# city versus eval rating year for rain gardens
+print 'Total BMP in City Evaluated by Year'
 test = evaluations[['raingarden','city','ratingyear']]
 test = test.replace({True: 1, False: 0})
 print test.pivot_table(index=["city"], columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # rating year by rain garden
+print 'Total BMP Evaluated by Year'
 test2 = evaluations[['raingarden','ratingyear']]
 test2 = test2.replace({True: 1, False: 0})
-print test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum)
+headers = ['year','n']
+print tabulate(test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum), headers, tablefmt="simple")
 
-# site versus eval ratingyear for rain gardens
-test3 = evaluations[['raingarden','ratingyear','garden_id']]
+# evaluated  with for rain gardens
+print 'Total BMP Evaluated'
+test3 = evaluations[['raingarden','garden_id']]
 test3 = test3.replace({True: 1, False: 0})
-print len(test3[(test3.raingarden == 1)].groupby('garden_id').count())
+print len(test3[(test3.raingarden == 1)].groupby(['garden_id']).count())
 
 # unique geo
-print len(evaluations.groupby(['latitude','longitude']).size())
+print 'Total Unique Geocoordinates'
+print len(sites.groupby(['latitude','longitude']).size())
+
 # accuracies
-print evaluations.groupby('accuracy').size()
+print 'Geocoordinate Accuracies'
+test8 = sites[['accuracy']]
+print test8.groupby('accuracy').size()
+print 'Geocoordinate Accuracies'
+headers = ['accuracy','n']
+print tabulate(test8.groupby('accuracy').size().to_frame(), headers, tablefmt="simple")
 
 # geo by rating year for rain garden
+print 'Geocoordinates of Evaluations by Year'
 test4 = evaluations[['raingarden','latitude','longitude','ratingyear']]
 test4 = test4.replace({True: 1, False: 0})
 print test4.pivot_table(index=["latitude","longitude"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # score by rating year
+print 'Ratings by Year for BMP'
 test5 = evaluations[['raingarden','score','ratingyear']]
 test5 = test5.replace({True: 1, False: 0})
 print test5.pivot_table(index=["score"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
-# geo by rating year for rain garden
+# zip by rating year for rain garden
+print 'BMP Evaluations in Zipcode by Year'
 test6 = evaluations[['raingarden','zip','ratingyear']]
 test6 = test6.replace({True: 1, False: 0})
 print test6.pivot_table(index=["zip"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
