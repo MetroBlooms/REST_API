@@ -168,9 +168,7 @@ print len(sites[(sites.raingarden == 1)].groupby('garden_id').size())
 # rain gardens by city
 print 'Total BMP by City'
 headers = ['city','garden']
-s = (sites.groupby(['city','raingarden']).size(),headers)
-print tabulate(sites.groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
-print tabulate(s, headers, tablefmt="simple")
+print tabulate(sites[(sites.raingarden == 1)].groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
 
 # confounder: eval_type used for evaluations not consistent with raingarden flag
 print 'Issue with Identifying Raingarden'
@@ -196,8 +194,7 @@ print test.pivot_table(index=["city"], columns="ratingyear",values='raingarden',
 print 'Total BMP Evaluated by Year'
 test2 = evaluations[['raingarden','ratingyear']]
 test2 = test2.replace({True: 1, False: 0})
-headers = ['year','n']
-print tabulate(test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum), headers, tablefmt="simple")
+print test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # evaluated  with for rain gardens
 print 'Total BMP Evaluated'
