@@ -1,4 +1,5 @@
 import tempfile
+import time
 import os
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 
@@ -66,16 +67,17 @@ qEvaluations = db.session.query(Site.address,
                          Site.city,
                          Site.zip,
                          Site.neighborhood,
+                         Site.raingarden,
+                         Geoposition.latitude,
+                         Geoposition.longitude,
+                         Geoposition.accuracy,
+                         Evaluation.evaluation_id,
+                         Evaluation.eval_type,
                          Evaluation.garden_id,
                          Evaluation.scoresheet,
                          Evaluation.score,
                          Evaluation.rating,
                          Evaluation.ratingyear,
-                         Geoposition.latitude,
-                         Geoposition.longitude,
-                         Geoposition.accuracy,
-                         Site.raingarden,
-                         Evaluation.eval_type,
                          Evaluation.comments,
                          Evaluation.date_evaluated,
                          Evaluation.evaluator_id).\
@@ -129,9 +131,6 @@ count = table.address.nunique()
 evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind, columns = list('raingardenratingyear'))
 sites = pd.read_sql(qSites.statement, qSites.session.bind, columns = list('raingardenratingyear'))
 
-# example Pandas queries:
-print evaluations.info()
-print sites.info()
 
 '''
 sites[(~sites.city.str.lower().str.contains('minnea')) &
@@ -153,101 +152,136 @@ evaluations.groupby(['garden_id','raingarden']).size()
 '''
 
 # basic analytics on data set:
-print 'Script: extract.py'
+print 'Script: ' + os.path.basename(__file__)
 print 'DataSource: metroblo_website'
-print 'RunDate: 6−mar−2016'
-print 'RunBy: gregsilverman'
+print 'RunDate: ' + time.strftime("%d-%B-%Y")
+print 'RunBy: ' + os.environ['USER']
 
-print '−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−'
-print 'Summary of MetroBlooms MySQL database:'
-print '−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−'
+print '\n'
+print '===================================='
+print 'MetroBlooms Evaluation Data Summary:'
+print '===================================='
 
-# total sites
+# example Pandas queries:
+print '\n'
+print 'evaluation dataframe info:'
+print '=========================='
+print evaluations.info()
+print '\n'
+print 'sites dataframe info:'
+print '====================='
+print sites.info()
+
+print '\n'
 print 'Total Unique Sites'
+print '=================='
 print sites.garden_id.nunique()
+
+print '\n'
+print 'Total Unique Sites with Evaluation'
+print '=================================='
 print evaluations.garden_id.nunique()
 
-print 'Total Sites with Identified BMP'
-print sites[(sites.raingarden == 1)].groupby('raingarden').size()
-
-# site w/ rain gardens
+print '\n'
+#print sites[(sites.raingarden == 1)].groupby('raingarden').size()
+print 'Total Unique Sites with BMP'
+print '==========================='
 print len(sites[(sites.raingarden == 1)].groupby('garden_id').size())
 
-# rain gardens by city
+print '\n'
 print 'Total BMP by City'
+print '================='
 headers = ['city','garden']
 print tabulate(sites[(sites.raingarden == 1)].groupby('city').count()['raingarden'].to_frame(), headers, tablefmt="simple")
 
+print '\n'
+print 'Total Unique Evaluations'
+print '========================'
+print evaluations.evaluation_id.nunique()
+
 # confounder: eval_type used for evaluations not consistent with raingarden flag
-print 'Issue with Identifying Raingarden'
+print '\n'
+print 'Issue with Identifying Raingarden: '\
+      'sites.raingarden versus evaluations.eval_type'
+print '================================================================================'
 print evaluations.pivot_table(index=["city"], columns=["eval_type"],values='raingarden',aggfunc=np.count_nonzero)
 
-# number of evaluators
+print '\n'
 print 'Total Evaluators'
+print '================'
 print evaluations.evaluator_id.nunique()
 
-# mobile evaluations:
+print '\n'
 print 'Total Mobile Evaluations'
+print '========================'
 test7 = evaluations[['comments']]
 test7 = test7.replace({True: 1, False: 0})
 print len(test7[(test7.comments.str.lower().str.contains('mobile') == 1)])
 
-# city versus eval rating year for rain gardens
+print '\n'
 print 'Total BMP in City Evaluated by Year'
+print '==================================='
 test = evaluations[['raingarden','city','ratingyear']]
 test = test.replace({True: 1, False: 0})
 print test.pivot_table(index=["city"], columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
-# rating year by rain garden
+print '\n'
 print 'Total BMP Evaluated by Year'
+print '==========================='
 test2 = evaluations[['raingarden','ratingyear']]
 test2 = test2.replace({True: 1, False: 0})
 print test2.pivot_table(columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
-# evaluated  with for rain gardens
+print '\n'
 print 'Total BMP Evaluated'
+print '==================='
 test3 = evaluations[['raingarden','garden_id']]
 test3 = test3.replace({True: 1, False: 0})
 print len(test3[(test3.raingarden == 1)].groupby(['garden_id']).count())
 
-# unique geo
+print '\n'
 print 'Total Unique Geocoordinates'
+print '==========================='
 print len(sites.groupby(['latitude','longitude']).size())
 
-# accuracies
-print 'Geocoordinate Accuracies'
+print '\n'
 test8 = sites[['accuracy']]
-print test8.groupby('accuracy').size()
 print 'Geocoordinate Accuracies'
+print '========================'
 headers = ['accuracy','n']
 print tabulate(test8.groupby('accuracy').size().to_frame(), headers, tablefmt="simple")
 
-# geo by rating year for rain garden
+print '\n'
 print 'Geocoordinates of Evaluations by Year'
+print '====================================='
 test4 = evaluations[['raingarden','latitude','longitude','ratingyear']]
 test4 = test4.replace({True: 1, False: 0})
 print test4.pivot_table(index=["latitude","longitude"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
 # score by rating year
+print '\n'
 print 'Ratings by Year for BMP'
+print '======================='
 test5 = evaluations[['raingarden','score','ratingyear']]
 test5 = test5.replace({True: 1, False: 0})
 print test5.pivot_table(index=["score"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
 
-# zip by rating year for rain garden
+print '\n'
 print 'BMP Evaluations in Zipcode by Year'
+print '=================================='
 test6 = evaluations[['raingarden','zip','ratingyear']]
 test6 = test6.replace({True: 1, False: 0})
 print test6.pivot_table(index=["zip"],columns="ratingyear",values='raingarden',aggfunc=np.sum)
-#print evaluations
 
+print '\n'
 print 'SQL evaluations:'
+print '================'
 print qEvaluations
 
 print '\n'
-print '\n'
 
 print 'SQL sites:'
+print '=========='
 print qSites
 
 
