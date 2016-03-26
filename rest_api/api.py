@@ -3,7 +3,7 @@
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
 from flask import abort, request, jsonify, g, url_for, session
-from rest_api.forms import LoginForm
+from forms import LoginForm
 from htsql import HTSQL
 from htsql.core.fmt.emit import emit
 from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
@@ -50,8 +50,8 @@ def verify_password(username_or_token, password):
 
 @app.route('/api/users', methods=['POST'])
 def new_user():
-    username = request.json.get('username')
-    password = request.json.get('password')
+    username = request.get_json(force=True)['username']
+    password = request.get_json(force=True)['password']
     if username is None or password is None:
         abort(400)    # missing arguments
     if User.query.filter_by(username=username).first() is not None:

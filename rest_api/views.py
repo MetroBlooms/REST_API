@@ -1,7 +1,7 @@
 #http://blog.miguelgrinberg.com/post/the-flask-mega-tutorial-part-v-user-logins
 #https://github.com/mrjoes/flask-admin/blob/master/examples/auth/app.py
 
-from flask import render_template, flash, redirect, session
+from flask import render_template, flash, redirect, session, request, abort, jsonify, url_for
 from flask.ext import login
 from app import app, db, sql_models
 from forms import LoginForm
@@ -22,7 +22,6 @@ def init_login():
 # Initialize flask-login
 init_login()
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     form = LoginForm()
@@ -37,20 +36,26 @@ def login():
 
         form_data = form.username.data
 
-        # validate the user...
-        user = get_user()
-
-        session['username'] = user.username
-
         if form_data is None or form_data == "":
             flash('Invalid login. Please try again.')
             return render_template("login.html", title='Sign In', form=form)
+
+        # validate the user...
+        user = get_user()
+
         if user is None:
             username = form.username.data
+
+            print("Got pwd: " + form.password.data)
+            user = sql_models.User(username=username)
+            user.hash_password(form.password.data)
+            db.session.add(user)
+            db.session.commit()
             # add logic to create new user
         else:
             if User.verify_password(user, form.password.data):
-                login_user(user)
+                # login_user(user)
+                session['username'] = user.username
                 flash("Logged in successfully.")
                 return redirect('/api/TestMe')
             else:

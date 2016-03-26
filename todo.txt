@@ -1,0 +1,13 @@
+1. Get virtualenv working inside PyCharm.
+
+2. Fix new user create so it works with JSON content-type
+
+3. Add email respond for password recovery.
+
+4. Add test framework.
+
+5. Enable cross domain requests for REST_API -- see
+
+6. Disable user creation with login form.
+
+7. Fix fabfile.py so it does not need absolute path. Commit to local repo.
