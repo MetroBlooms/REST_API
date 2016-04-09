@@ -1,7 +1,10 @@
 from fabric.api import *
 from contextlib import contextmanager
+import os
 
-env.directory = '~/development/python/rest-api/rest_apgit merge origin/branch-i-want-to-merge-fromi'
+currentDirectory = os.path.dirname(os.path.realpath(__file__))
+
+env.directory = currentDirectory + '/rest_api'
 env.activate = 'source ' + env.directory + '/venv/bin/activate' # use virtual environment to execute commands
 
 # set context manager to use virtualenv
@@ -33,8 +36,8 @@ def db():
 # make API available
 def api():
     with virtualenv():
-        call('./api.py')
         call('which python')
+        call('./api.py')
 
 # push change to repo
 def scm():

@@ -11,7 +11,7 @@ from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 # test
 
 # load extensions
-from  app import app, db, sql_models as models
+from app import app, db, sql_models as models
 from flask_cors import cross_origin
 
 

@@ -36,21 +36,16 @@ Uses Flask, SQLAlchemy and various libraries
 > 
 > https://www.fabfile.org/
 
-Fab is not yet Python 3.x compatible. So if you attempt to invoke 'fab virtualenv' at the command line and you are using Python 3.x, the execution will fail with 
-
-> ImportError: cannot import name 'isMappingType'
-
-This is a known issue. There are options. One option is to avoid 'fab virtualenv'. Instead use command 
-
-> $ source ./cv.sh
-
-Please note that the other fabric commands are good; but all must be run in 'venv'. See above for more information on 'venv'.
-
+### Show Available Commands
 $ fab --list
 
 ## Running This App
 
-$./api.py
+### With Fab
+$ fab api
+ 
+### From Command Line
+$ python ./api.py
 
 ### Create A User
 
