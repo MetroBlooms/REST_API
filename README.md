@@ -40,7 +40,7 @@ Fab is not yet Python 3.x compatible. So if you attempt to invoke 'fab virtualen
 
 > ImportError: cannot import name 'isMappingType'
 
-This is a known issue. There are options; but the one used at the moment is to avoid 'fab virtualenv'. Instead use command 
+This is a known issue. There are options. One option is to avoid 'fab virtualenv'. Instead use command 
 
 > $ source ./cv.sh
 
