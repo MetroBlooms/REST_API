@@ -152,80 +152,16 @@ def get_resource():
     db.session.add(s)
     db.session.commit()
 
-    #if mode == 'test':
-        #print s.address.count(address) # 1
-        #print s.address[0] # <Address object at 0x10c098ed0>
-        #print s.address.filter_by(address = address["address"]).count(address) # 1
-
     # Render template
     return jsonify(json)
-    #return jsonify({'data': 'Hello, %s!' % g.user.username})
 
 # test HTSQL
 #  & and | for logical operators
 @app.route('/api/htsql/', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
-#@auth.login_required
-#def get_htsql(criterion):
 def get_htsql():
-    #if mode == 'test':
-    #    print criterion
-    #test = HTSQL("mysql://gms:test@localhost/test")
     test = HTSQL("pgsql://test:test@localhost/test")
-    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
-    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
-
-    #test = HTSQL("mysql://gms:test@localhost/test")
     rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
-    # rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
-
-# http://127.0.0.1:8080/evaluation{comments,site{geoposition{id}?latitude=46&longitude%3E47},site{geoposition{accuracy}?latitude=46&longitude%3E47},evaluator{first_name}}?evaluator.first_name='you'/:sql
-# http://127.0.0.1:8080/site{site_name :as location, count(evaluation) :as 'N visits'}
-# http://127.0.0.1:8080/site{site_name :as location, count(evaluation) :as 'N visits'}?site_name!='Home'
-# http://127.0.0.1:8080/person{first_name + ' ' + last_name :as name, count(evaluation) :as 20'N visits'}?count(evaluation)>0
-
-# /evaluation{comments,site{geoposition?accuracy=46.0&latitude%3C42},evaluator{first_name}}?evaluator.first_name='you'
-#
-# SELECT "evaluation"."comments",
-#        "site"."?_1",
-#        "site"."?_2",
-#        "site"."id_1",
-#        "site"."latitude",
-#        "site"."longitude",
-#        "site"."accuracy",
-#        "site"."timestamp",
-#        "person_2"."?",
-#        "person_2"."first_name"
-# FROM "evaluation"
-#      LEFT OUTER JOIN "person" AS "person_1"
-#                      ON ("evaluation"."evaluator_id" = "person_1"."id")
-#      LEFT OUTER JOIN (SELECT TRUE AS "?_1",
-#                              "geoposition"."?" AS "?_2",
-#                              "geoposition"."id" AS "id_1",
-#                              "geoposition"."latitude",
-#                              "geoposition"."longitude",
-#                              "geoposition"."accuracy",
-#                              "geoposition"."timestamp",
-#                              "site"."id" AS "id_2"
-#                       FROM "site"
-#                            LEFT OUTER JOIN (SELECT TRUE AS "?",
-#                                                    "geoposition"."id",
-#                                                    "geoposition"."latitude",
-#                                                    "geoposition"."longitude",
-#                                                    "geoposition"."accuracy",
-#                                                    "geoposition"."timestamp"
-#                                             FROM "geoposition"
-#                                             WHERE ("geoposition"."accuracy" = 46.0::FLOAT8)
-#                                                   AND ("geoposition"."latitude" < 42.0::FLOAT8)) AS "geoposition"
-#                                            ON ("site"."geoposition_id" = "geoposition"."id")) AS "site"
-#                      ON ("evaluation"."site_id" = "site"."id_2")
-#      LEFT OUTER JOIN (SELECT TRUE AS "?",
-#                              "person"."first_name",
-#                              "person"."id"
-#                       FROM "person") AS "person_2"
-#                      ON ("evaluation"."evaluator_id" = "person_2"."id")
-# WHERE ("person_1"."first_name" = 'you')
-# ORDER BY "evaluation"."id" ASC
     with test:
         text = ''.join(emit('x-htsql/json', rows))
 
@@ -237,12 +173,10 @@ def get_htsql():
 # test nested data
 @app.route('/api/nested/', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
-#@auth.login_required
+
 def get_nested():
     test = HTSQL("mysql://nester:nesting@localhost/nestedsetspoc")
-    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
     rows = test.produce("/clinical_data{id, patient_sid :as sid,string_value :as value,attribute{attribute_value}}")
-    # rows = test.produce("/attribute{attribute_value, clinical_data{patient_sid :as sid,string_value :as value}}")
 
     with test:
         text = ''.join(emit('x-htsql/json', rows))
@@ -294,32 +228,14 @@ def stuff():
     return json
 
 
-# class TestMe(restful.Resource):
-@app.route('/api/TestMe', methods=['GET','POST'])
+@app.route('/api/testMe', methods=['GET','POST'])
 def TestMe():
-        #json = results()
-        #return json
-    #if request.method == 'POST':
+
     form = LoginForm()
     if request.headers['Content-Type'] == 'text/plain':
         return "Text Message: " + request.data
 
-    return jsonify({'username': session['username']}) #form.username.data})
-    #else:
-            #return 'Invalid username/password'
-
-#api.add_resource(TestMe, '/api/TestMe')
-
-from flask_mail import Message
-
-@app.route("/api/test_msg")
-def test_msg():
-
-    msg = Message("Hello",
-                  sender="Me",
-                  recipients=[""])
-
-    mail.send(msg)
+    return jsonify({'username': form.username.data})
 
 if __name__ == '__main__':
     # Start app

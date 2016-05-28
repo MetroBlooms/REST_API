@@ -2,6 +2,7 @@ import ConfigParser
 import os
 
 class EmailConfig():
+
     email_recovery_path = '../../configuration/email_recovery.ini'
 
     def __init__(self):
