@@ -7,13 +7,10 @@ from forms import LoginForm
 from htsql import HTSQL
 from htsql.core.fmt.emit import emit
 from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
-
-# test
-
-# load extensions
 from app import app, db, sql_models as models
 from flask_cors import cross_origin
-
+# from rest_api.security.email.email_recovery import EmailRecovery
+from security.email.email_recovery import EmailRecovery
 
 auth = HTTPBasicAuth()
 #auth = HTTPDigestAuth()
@@ -34,6 +31,25 @@ mode = 'test' # live or test for use in debugging
 def index():
     return '<a href="/login">Click me to log in!</a>'
 
+from flask import Response
+from flask import jsonify
+
+# NOTE: Must be prevalidated email address
+@app.route("/api/sendPasswordRecoveryEmail", methods=['POST'])
+def sendPasswordRecoveryEmail():
+    emailAddress = request.get_json(force=True)['emailAddress']
+
+    emailRecovery = EmailRecovery()
+    emailRecovery.sendEmail(emailAddress)
+
+    result = {
+      'result' : 'success'
+    }
+
+    resp = jsonify(result)
+    resp.status_code = 200
+
+    return resp
 
 @auth.verify_password
 def verify_password(username_or_token, password):

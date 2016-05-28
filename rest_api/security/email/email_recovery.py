@@ -1,10 +1,8 @@
 
 from threading import Thread
-
 from flask_mail import Message
-
-from rest_api.app import app, mail
 from email_config import EmailConfig
+from app import app, mail
 
 class EmailRecovery():
 
@@ -32,4 +30,3 @@ class EmailRecovery():
     def send_email_async(self, msg):
         with app.app_context():
             mail.send(msg)
-

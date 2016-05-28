@@ -1,6 +1,8 @@
-import os
+import rest_api.tests.unit_test_fix
 import unittest
 from unittest import TestCase
+import os
+
 from rest_api.security.email.email_config import EmailConfig
 from rest_api.security.email.email_recovery import EmailRecovery
 
@@ -29,6 +31,5 @@ class TestEmailRecovery(TestCase):
         emailRecovery = EmailRecovery()
         emailRecovery.sendEmail('chris@fletch22.com')
 
-
-if __name__ == '__main__':
+if __name__ == '__main__' and __package__ is None:
     unittest.main()

@@ -65,3 +65,10 @@ If the username already exists the server will respond '400 (bad request).
 URL: http://localhost:5000/api/users/5
 Method: GET
 
+###  To Send the Password Recovery Email
+
+URL: http://localhost:5000/api/sendPasswordRecoveryEmail 
+Method: POST
+Expected Request JSON: { "emailAdddress": "<usersEmailAddress>" }
+Expected Response (Successful): { "result": "success" }
+

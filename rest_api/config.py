@@ -12,7 +12,4 @@ SQLALCHEMY_DATABASE_URI = 'mysql://gms:test@localhost/nestedSetsPOC'
 SQLALCHEMY_ECHO = True
 
 # CORS headers with JSON
-#CORS_HEADERS = 'Content-Type'
-#token
-#CORS_HEADERS = 'X-Auth-Token'
 CORS_HEADERS = 'Authorization, Content-Type, X-Auth-Token, X-Requested-With'
