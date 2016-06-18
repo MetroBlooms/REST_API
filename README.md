@@ -64,11 +64,22 @@ If the username already exists the server will respond '400 (bad request).
 
 URL: http://localhost:5000/api/users/5
 Method: GET
+fabz
 
 ###  To Send the Password Recovery Email
+Note: The only complicated part of this is the baseUrl. When a user gets an email for password recovery they will open the email. Inside they will find a link. 
+When they click the link a browser (or app) will open and take then to the password recovery page. The base URL is the just the url
+to that page. The base url might look like this:
+
+    http://foo.com/recovery_section/foo?some_key:some_value
+
+The token will be appended like so:
+
+    http://foo.com/recovery_section/foo?some_key:some_value&token=1234i2143uio4321uio4321uio4312
+
 
 URL: http://localhost:5000/api/sendPasswordRecoveryEmail 
 Method: POST
-Expected Request JSON: { "emailAdddress": "<usersEmailAddress>" }
+Expected Request JSON: { "emailAdddress": "<usersEmailAddress>", "baseUrl": "<BASE URL TO WHICH WE WILL APPEND SECURE TOKEN>" }
 Expected Response (Successful): { "result": "success" }
 

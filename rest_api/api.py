@@ -34,13 +34,15 @@ def index():
 from flask import Response
 from flask import jsonify
 
+
 # NOTE: Must be prevalidated email address
 @app.route("/api/sendPasswordRecoveryEmail", methods=['POST'])
 def sendPasswordRecoveryEmail():
-    emailAddress = request.get_json(force=True)['emailAddress']
+    emailaddress = request.get_json(force=True)['emailAddress']
+    baseurl = request.get_json(force=True)['baseUrl']
 
     emailRecovery = EmailRecovery()
-    emailRecovery.sendEmail(emailAddress)
+    emailRecovery.sendEmail(emailaddress, baseurl)
 
     result = {
       'result' : 'success'
