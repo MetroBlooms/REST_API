@@ -24,3 +24,6 @@ simplejson
 numexpr
 scikit-learn
 tabulate
+uwsgi
+statsmodels
+pylab

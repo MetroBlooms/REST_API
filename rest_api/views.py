@@ -2,7 +2,7 @@
 #https://github.com/mrjoes/flask-admin/blob/master/examples/auth/app.py
 
 from flask import render_template, flash, redirect, session
-from flask.ext import login
+import flask_login as login
 from app import app, db, sql_models
 from forms import LoginForm
 

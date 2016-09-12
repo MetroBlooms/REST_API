@@ -3,7 +3,7 @@
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
 from flask import abort, request, jsonify, g, url_for, session
-from rest_api.forms import LoginForm
+from forms import LoginForm
 from htsql import HTSQL
 from htsql.core.fmt.emit import emit
 from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth

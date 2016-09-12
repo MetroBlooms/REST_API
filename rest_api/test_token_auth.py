@@ -2,7 +2,7 @@
 # http://gouthamanbalaraman.com/minimal-flask-login-example.html
 
 from flask import Response
-from flask.ext.login import LoginManager, UserMixin, login_required
+from flask_login import LoginManager, UserMixin, login_required
 from flask_cors import cross_origin
 
 #app = Flask(__name__)

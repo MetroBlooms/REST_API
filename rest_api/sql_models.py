@@ -1,6 +1,6 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
-from flask.ext.login import LoginManager, UserMixin, login_required
+from flask_login import LoginManager, UserMixin, login_required
 from sqlalchemy import (
     Column,
     Boolean,

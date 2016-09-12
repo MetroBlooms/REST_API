@@ -1,6 +1,6 @@
 # Create db connection to postgres
 from flask import Flask
-from flask.ext.sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
 # Define Flask app

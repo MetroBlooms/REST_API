@@ -1,6 +1,7 @@
 # data tables
 
 from sqlalchemy.orm import relationship, backref
+
 from sqlalchemy import (
     Column,
     Boolean,
@@ -53,17 +54,14 @@ class Site(db.Model):
     evaluations = relationship("Evaluation", backref="site")
 
 
-class Evaluator(db.Model):
-    __tablename__ = 'garden_evaluators'
-    evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer)
-
-'''
 class Person(db.Model):
     __tablename__ = 'users'
     user_id = Column(Integer, primary_key=True, autoincrement=True)
     firstname = Column(String(20))
     lastname = Column(String(15))
-    email = Column(String)
-'''
 
+
+class Evaluator(db.Model):
+    __tablename__ = 'garden_evaluators'
+    evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer)
