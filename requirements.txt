@@ -27,3 +27,4 @@ tabulate
 uwsgi
 statsmodels
 pylab
+rpy2

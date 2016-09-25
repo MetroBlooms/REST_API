@@ -14,3 +14,4 @@ brew install pyqt
 brew install zmq
 pip install pyzmq
 pip install pygments
+

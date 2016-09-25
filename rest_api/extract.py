@@ -15,6 +15,55 @@ import mb_models as models
 from mb_models import db
 from tabulate import tabulate
 
+def cartesian(arrays, out=None):
+    """
+    Generate a cartesian product of input arrays.
+
+    Parameters
+    ----------
+    arrays : list of array-like
+        1-D arrays to form the cartesian product of.
+    out : ndarray
+        Array to place the cartesian product in.
+
+    Returns
+    -------
+    out : ndarray
+        2-D array of shape (M, len(arrays)) containing cartesian products
+        formed of input arrays.
+
+    Examples
+    --------
+    >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
+    array([[1, 4, 6],
+           [1, 4, 7],
+           [1, 5, 6],
+           [1, 5, 7],
+           [2, 4, 6],
+           [2, 4, 7],
+           [2, 5, 6],
+           [2, 5, 7],
+           [3, 4, 6],
+           [3, 4, 7],
+           [3, 5, 6],
+           [3, 5, 7]])
+
+    """
+
+    arrays = [np.asarray(x) for x in arrays]
+    dtype = arrays[0].dtype
+
+    n = np.prod([x.size for x in arrays])
+    if out is None:
+        out = np.zeros([n, len(arrays)], dtype=dtype)
+
+    m = n / arrays[0].size
+    out[:,0] = np.repeat(arrays[0], m)
+    if arrays[1:]:
+        cartesian(arrays[1:], out=out[0:m,1:])
+        for j in xrange(1, arrays[0].size):
+            out[j*m:(j+1)*m,1:] = out[0:m,1:]
+    return out
 
 '''
 To run from interpreter you must first issue the commands:
@@ -372,6 +421,10 @@ d = test[test['garden_id'].isin(c)]
 
 d = d.replace({True: 1, False: 0, None: 0})
 
+# add count of garden_id
+e = test.groupby(['garden_id']).size().to_frame(name = 'n').reset_index()
+
+d = pd.merge(e, d, on = ('garden_id'), how = 'inner')
 # Issue wrt python shell: http://github.com/mwaskom/seaborn/issues/231
 import matplotlib
 matplotlib.use('TkAgg')
@@ -380,12 +433,13 @@ import seaborn as sns
 
 # write df elements to list for plotting
 garden_id = d.values.T.tolist()[0]
-ratingyear = d.values.T.tolist()[1]
-score = d.values.T.tolist()[2]
-raingarden = d.values.T.tolist()[3]
+n = d.values.T.tolist()[1]
+ratingyear = d.values.T.tolist()[2]
+score = d.values.T.tolist()[3]
+raingarden = d.values.T.tolist()[4]
 
 # write to dictionary and new df
-df = pd.DataFrame(dict(ratingyear = ratingyear, score = score, garden_id = garden_id, raingarden = raingarden))
+df = pd.DataFrame(dict(ratingyear = ratingyear, score = score, garden_id = garden_id, raingarden = raingarden,n = n))
 
 # plot variables as scatter using assigned colors by category
 #sns.lmplot('ratingyear', 'score', data=d, hue='garden_id', fit_reg=False)
@@ -403,11 +457,11 @@ df = pd.DataFrame(dict(ratingyear = ratingyear, score = score, garden_id = garde
 #plt.close()
 
 # add scoresheet data from evals record set
-e = pd.merge(table, d, on = ('garden_id', 'ratingyear'), how = 'inner')
-e.to_dict()['scoresheet']
+f = pd.merge(table, d, on = ('garden_id', 'ratingyear'), how = 'inner')
+f.to_dict()['scoresheet']
 
 # group by scoresheet value: http://stackoverflow.com/questions/39029939/how-to-best-extract-sub-dictionaries-by-value-in-this-object
-horrible_mess = e.to_dict()['scoresheet']
+horrible_mess = f.to_dict()['scoresheet']
 from ast import literal_eval
 from collections import defaultdict
 still_messy  = {k:literal_eval(v) for k,v in horrible_mess.items()}
@@ -508,7 +562,7 @@ result = pd.concat(frames)
 result['id'] = result.index
 # create data frames with missing dual keyed variables that map to index:
 
-ratingyear = e.to_dict()['ratingyear']
+ratingyear = f.to_dict()['ratingyear']
 out = []
 for k, v in ratingyear.items():
     kv = {'id': k, 'ratingyear': v}
@@ -517,7 +571,7 @@ for k, v in ratingyear.items():
 ratingyear = pd.DataFrame(out)
 
 out = []
-garden_id = e.to_dict()['garden_id']
+garden_id = f.to_dict()['garden_id']
 for k, v in garden_id.items():
     kv = {'id': k, 'garden_id': v}
     out.append(kv)
@@ -630,10 +684,10 @@ scorecard[['dn_score', 'es_score', 'me_score', 'pv_score', 'vi_score']].describe
 # Add total score as remapped category
 
 # set mask for pass/fail on overall score
-well_maintained = (df1['score'] >= 0) & (df1['score'] < 13)
-df1['pass'] = 1
-# update those that failed
-df1['pass'][well_maintained] = 0
+well_maintained = (df1['score'] > 8)
+df1['pass'] = 0
+# update those that passed
+df1['pass'][well_maintained] = 1
 
 # merge with categorical scores
 analytical_set = pd.merge(df1, scorecard, on = ('garden_id', 'ratingyear'), how = 'inner')
@@ -641,26 +695,26 @@ analytical_set['score'] = analytical_set['score'].astype(int)
 analytical_set['raingarden'] = analytical_set['raingarden'].astype(int)
 analytical_set['ratingyear'] = analytical_set['ratingyear'].astype(int)
 analytical_set['garden_id'] = analytical_set['garden_id'].astype(int)
+analytical_set['n'] = analytical_set['n'].astype(int)
 
 # as per http://blog.yhat.com/posts/logistic-regression-and-python.html
 analytical_set.describe()
-pd.crosstab(df1['pass'], analytical_set['es_score'], rownames=['pass'])
-pd.crosstab(df1['pass'], analytical_set['me_score'], rownames=['pass'])
-pd.crosstab(df1['pass'], analytical_set['pv_score'], rownames=['pass'])
-analytical_set[['es_score', 'me_score', 'pv_score', 'vi_score', 'dn_score', 'score', 'raingarden', 'pass']].hist()
+pd.crosstab(analytical_set['pass'], analytical_set['es_score'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['me_score'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['pv_score'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['raingarden'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['n'], rownames=['pass'])
+analytical_set[['es_score', 'me_score', 'pv_score', 'vi_score', 'dn_score', 'score', 'raingarden', 'n', 'pass']].hist()
 
 dummy_es = pd.get_dummies(analytical_set['es_score'], prefix='es')
 dummy_es.head()
 dummy_pv = pd.get_dummies(analytical_set['pv_score'], prefix='pv')
 dummy_me = pd.get_dummies(analytical_set['me_score'], prefix='me')
-dummy_rg = pd.get_dummies(analytical_set['raingarden'], prefix='rg')
 
-
-data = analytical_set[['pass']]
-data = data.join(dummy_es)
-data = data.join(dummy_pv)
-data = data.join(dummy_me)
-data = data.join(dummy_rg)
+data = analytical_set[['pass','raingarden','n']]
+data = data.join(dummy_es.ix[:,[0,1,2,3]])
+data = data.join(dummy_pv.ix[:,[0,1,2,3]])
+data = data.join(dummy_me.ix[:,[0,1,2,3]])
 
 data['intercept'] = 1.0
 
@@ -670,9 +724,166 @@ logit = sm.Logit(data['pass'], data[train_cols])
 
 result = logit.fit()
 print result.summary()
+# look at the confidence interval of each coefficient
+print result.conf_int()
+# odds ratio
+np.exp(result.params)
+
+# combined
+params = result.params
+conf = result.conf_int()
+conf['OR'] = params
+conf.columns = ['2.5%', '97.5%', 'OR']
+np.exp(conf)
+
+# simulate
+combos = pd.DataFrame(cartesian([[1, 2, 3, 4, 5, 6, 7], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4], [0, 1], [1.]]))
+combos.columns = ['n', 'es_score', 'me_score', 'pv_score', 'raingarden', 'intercept']
+
+dummy_es = pd.get_dummies(combos['es_score'], prefix='es')
+dummy_es.head()
+dummy_pv = pd.get_dummies(combos['pv_score'], prefix='pv')
+dummy_me = pd.get_dummies(combos['me_score'], prefix='me')
+dummy_rg = pd.get_dummies(combos['raingarden'], prefix='rg')
+
+dummy_es.columns = ['es_0', 'es_1', 'es_2', 'es_3', 'es_4']
+dummy_me.columns = ['me_0', 'me_1', 'me_2', 'me_3', 'me_4']
+dummy_pv.columns = ['pv_0', 'pv_1', 'pv_2', 'pv_3', 'pv_4']
+dummy_rg.columns = ['rg_0', 'rg_1']
+cols_to_keep = ['n', 'es_score', 'me_score', 'pv_score', 'raingarden', 'intercept']
+
+combos = combos[cols_to_keep]
+combos = combos.join(dummy_es.ix[:,[0,1,2,3]])
+combos = combos.join(dummy_pv.ix[:,[0,1,2,3]])
+combos = combos.join(dummy_me.ix[:,[0,1,2,3]])
+combos = combos.join(dummy_rg.ix[:,[1]])
+
+combos['pass_pred'] = result.predict(combos[train_cols])
+import matplotlib.pylab as pl
+
+def isolate_and_plot(variable):
+    # isolate gre and class rank
+    grouped = pd.pivot_table(combos, values=['pass_pred'], index=[variable, 'raingarden'],
+                             aggfunc=np.mean)
+
+    # in case you're curious as to what this looks like
+    # print grouped.head()
+    #                      admit_pred
+    # gre        prestige
+    # 220.000000 1           0.282462
+    #            2           0.169987
+    #            3           0.096544
+    #            4           0.079859
+    # 284.444444 1           0.311718
+
+    # make a plot
+    colors = 'rbgyrbgy'
+    for col in combos.raingarden.unique():
+        plt_data = grouped.ix[grouped.index.get_level_values(1) == col]
+        pl.plot(plt_data.index.get_level_values(0), plt_data['pass_pred'],
+                color=colors[int(col)])
+
+    pl.xlabel(variable)
+    pl.ylabel("P(pass=1)")
+    pl.legend(['0', '1'], loc='upper left', title='rg')
+    pl.title("Prob(pass=1) isolating " + variable + " and rg")
+    pl.show()
+
+#isolate_and_plot('es_score')
+#isolate_and_plot('raingarden')
+#isolate_and_plot('pv_score')
+#isolate_and_plot('es_score')
+
+# interactions (see http://www.ats.ucla.edu/stat/stata/seminars/interaction_sem/interaction_sem.htm):
+
+# move over to R
+import pandas.rpy.common as com
+from rpy2.robjects.packages import importr
+import rpy2.robjects as ro
+
+r_analytical_set = com.convert_to_r_dataframe(analytical_set)
+print r_analytical_set
+print type(r_analytical_set)
+
+formula = 'pass ~ raingarden + n'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n + factor(es_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n + factor(me_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n + factor(pv_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
 
 
-# binary response variable
+formula = 'pass ~ raingarden + n + factor(me_score) + factor(pv_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n + factor(me_score) + factor(es_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n + factor(pv_score) + factor(es_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+formula = 'pass ~ raingarden + n + factor(me_score) + factor(pv_score) + factor(es_score)'
+fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
+s = ro.r.summary(fit)
+print(fit)
+print(ro.r.summary(fit))
+
+# comparison to rpy2
+rdata = analytical_set[['pass','raingarden','n']]
+rdata['intercept'] = 1.0
+train_cols = rdata.columns[1:]
+logit = sm.Logit(data['pass'], rdata[train_cols])
+result = logit.fit()
+print result.summary()
+
+# extract summary object values ->
+# http://stackoverflow.com/questions/16110715/getting-part-of-r-object-from-python-using-rpy2
+print fit.names
+z1 = s.rx2('deviance')
+z2 = s.rx2('null.deviance')
+
+
+
+
+
 
 print '\n'
 print 'SQL evaluations:'
