@@ -423,24 +423,47 @@ d = test[test['garden_id'].isin(c)]
 d = d.replace({True: 1, False: 0, None: 0})
 
 # add count of garden_id
-e = test.groupby(['garden_id']).size().to_frame(name = 'n').reset_index()
+# count TOTAL times across garden_id
+# e = test.groupby(['garden_id']).size().to_frame(name = 'n').reset_index()
 
-d = pd.merge(e, d, on = ('garden_id'), how = 'inner')
+# see http://stackoverflow.com/questions/25119524/pandas-conditional-rolling-count
+def rolling_count(val):
+    if val == rolling_count.previous:
+        rolling_count.count +=1
+    else:
+        rolling_count.previous = val
+        rolling_count.count = 1
+    return rolling_count.count
+rolling_count.count = 0 #static variable
+rolling_count.previous = None #static variable
+
+#e = pd.DataFrame(d)
+d['n'] = d['garden_id'].apply(rolling_count)
+
+
+#d = pd.merge(e, d, on = ('garden_id'), how = 'inner')
 # Issue wrt python shell: http://github.com/mwaskom/seaborn/issues/231
 import matplotlib
 matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 # write df elements to list for plotting
 garden_id = d.values.T.tolist()[0]
-n = d.values.T.tolist()[1]
-ratingyear = d.values.T.tolist()[2]
-score = d.values.T.tolist()[3]
-raingarden = d.values.T.tolist()[4]
+ratingyear = d.values.T.tolist()[1]
+score = d.values.T.tolist()[2]
+raingarden = d.values.T.tolist()[3]
+n = d.values.T.tolist()[4]
 
 # write to dictionary and new df
 df = pd.DataFrame(dict(ratingyear = ratingyear, score = score, garden_id = garden_id, raingarden = raingarden,n = n))
+
+df['score'] = df['score'].astype(int)
+df['garden_id'] = df['garden_id'].astype(int)
+df['raingarden'] = df['raingarden'].astype(int)
+df['n'] = df['n'].astype(int)
+df['score'] = df['score'].astype(int)
+df['ratingyear'] = df['ratingyear'].astype(int)
+
 
 # plot variables as scatter using assigned colors by category
 #sns.lmplot('ratingyear', 'score', data=d, hue='garden_id', fit_reg=False)
@@ -609,7 +632,7 @@ pv = yesh[yesh['category'] == 'plant_variety_and_health']
 # line
 #g.map(plt.plot, 'ratingyear', 'score')
 
-# total scores:
+# total scores, filter out 'location' (and sizing, since instrument is not same)
 df1 = df[~df['garden_id'].isin(final[final['category'] == 'location'].garden_id)]
 
 '''
@@ -635,6 +658,7 @@ bp_vi.boxplot(by='garden_id')
 
 bp_pv = pv[['garden_id','score']]
 bp_pv.boxplot(by='garden_id')
+
 
 '''
 
@@ -698,211 +722,6 @@ analytical_set['ratingyear'] = analytical_set['ratingyear'].astype(int)
 analytical_set['garden_id'] = analytical_set['garden_id'].astype(int)
 analytical_set['n'] = analytical_set['n'].astype(int)
 
-# as per http://blog.yhat.com/posts/logistic-regression-and-python.html
-analytical_set.describe()
-pd.crosstab(analytical_set['pass'], analytical_set['es_score'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['me_score'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['pv_score'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['raingarden'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['n'], rownames=['pass'])
-analytical_set[['es_score', 'me_score', 'pv_score', 'vi_score', 'dn_score', 'score', 'raingarden', 'n', 'pass']].hist()
-
-dummy_es = pd.get_dummies(analytical_set['es_score'], prefix='es')
-dummy_es.head()
-dummy_pv = pd.get_dummies(analytical_set['pv_score'], prefix='pv')
-dummy_me = pd.get_dummies(analytical_set['me_score'], prefix='me')
-
-data = analytical_set[['pass','raingarden','n']]
-data = data.join(dummy_es.ix[:,[0,1,2,3]])
-data = data.join(dummy_pv.ix[:,[0,1,2,3]])
-data = data.join(dummy_me.ix[:,[0,1,2,3]])
-
-data['intercept'] = 1.0
-
-train_cols = data.columns[1:]
-import statsmodels.api as sm
-logit = sm.Logit(data['pass'], data[train_cols])
-
-result = logit.fit()
-print result.summary()
-# look at the confidence interval of each coefficient
-print result.conf_int()
-# odds ratio
-np.exp(result.params)
-
-# combined
-params = result.params
-conf = result.conf_int()
-conf['OR'] = params
-conf.columns = ['2.5%', '97.5%', 'OR']
-np.exp(conf)
-
-# simulate
-combos = pd.DataFrame(cartesian([[1, 2, 3, 4, 5, 6, 7], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4], [0, 1], [1.]]))
-combos.columns = ['n', 'es_score', 'me_score', 'pv_score', 'raingarden', 'intercept']
-
-dummy_es = pd.get_dummies(combos['es_score'], prefix='es')
-dummy_es.head()
-dummy_pv = pd.get_dummies(combos['pv_score'], prefix='pv')
-dummy_me = pd.get_dummies(combos['me_score'], prefix='me')
-dummy_rg = pd.get_dummies(combos['raingarden'], prefix='rg')
-
-dummy_es.columns = ['es_0', 'es_1', 'es_2', 'es_3', 'es_4']
-dummy_me.columns = ['me_0', 'me_1', 'me_2', 'me_3', 'me_4']
-dummy_pv.columns = ['pv_0', 'pv_1', 'pv_2', 'pv_3', 'pv_4']
-dummy_rg.columns = ['rg_0', 'rg_1']
-cols_to_keep = ['n', 'es_score', 'me_score', 'pv_score', 'raingarden', 'intercept']
-
-combos = combos[cols_to_keep]
-combos = combos.join(dummy_es.ix[:,[0,1,2,3]])
-combos = combos.join(dummy_pv.ix[:,[0,1,2,3]])
-combos = combos.join(dummy_me.ix[:,[0,1,2,3]])
-combos = combos.join(dummy_rg.ix[:,[1]])
-
-combos['pass_pred'] = result.predict(combos[train_cols])
-import matplotlib.pylab as pl
-
-def isolate_and_plot(variable):
-    # isolate gre and class rank
-    grouped = pd.pivot_table(combos, values=['pass_pred'], index=[variable, 'raingarden'],
-                             aggfunc=np.mean)
-
-    # in case you're curious as to what this looks like
-    # print grouped.head()
-    #                      admit_pred
-    # gre        prestige
-    # 220.000000 1           0.282462
-    #            2           0.169987
-    #            3           0.096544
-    #            4           0.079859
-    # 284.444444 1           0.311718
-
-    # make a plot
-    colors = 'rbgyrbgy'
-    for col in combos.raingarden.unique():
-        plt_data = grouped.ix[grouped.index.get_level_values(1) == col]
-        pl.plot(plt_data.index.get_level_values(0), plt_data['pass_pred'],
-                color=colors[int(col)])
-
-    pl.xlabel(variable)
-    pl.ylabel("P(pass=1)")
-    pl.legend(['0', '1'], loc='upper left', title='rg')
-    pl.title("Prob(pass=1) isolating " + variable + " and rg")
-    pl.show()
-
-#isolate_and_plot('es_score')
-#isolate_and_plot('raingarden')
-#isolate_and_plot('pv_score')
-#isolate_and_plot('es_score')
-
-# interactions (see http://www.ats.ucla.edu/stat/stata/seminars/interaction_sem/interaction_sem.htm):
-
-# move over to R
-import pandas.rpy.common as com
-from rpy2.robjects.packages import importr
-import rpy2.robjects as ro
-import rpy2.robjects.packages as rpy2o
-R = ro.r
-import rpy2.robjects.lib.ggplot2 as ggplot2
-
-r_analytical_set = com.convert_to_r_dataframe(analytical_set)
-print r_analytical_set
-print type(r_analytical_set)
-
-formula = 'pass~n'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-from rpy2.robjects import Formula, Vector
-rplot = R('plot')
-formula = Formula('pass~n')
-formula.getenvironment()['pass'] = r_analytical_set.rx2('pass')
-formula.getenvironment()['n'] = r_analytical_set.rx2('n')
-R.plot(formula, data=r_analytical_set, ylab = 'P(outcome =  1 | pass)', xlab = 'N: number of times evaluated', xaxp = R.c(0, 5, 10))
-
-with open('/Users/gregsilverman//development/python/rest_api/rest_api/utils.r', 'r') as f:
-    string = f.read()
-
-from rpy2.robjects.packages import STAP
-invlogit = STAP(string, "invlogit")
-
-from rpy2.robjects.vectors import FloatVector
-
-#c1 = R.curve(invlogit(R.coef(fit)[0] + R.coef(fit)[1]*R.x), add = True)
-#R(c1)
-'''
-formula = 'pass ~ raingarden + n'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n + factor(es_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n + factor(me_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n + factor(pv_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-
-formula = 'pass ~ raingarden + n + factor(me_score) + factor(pv_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n + factor(me_score) + factor(es_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n + factor(pv_score) + factor(es_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-
-formula = 'pass ~ raingarden + n + factor(me_score) + factor(pv_score) + factor(es_score)'
-fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
-s = R.summary(fit)
-print(fit)
-print(R.summary(fit))
-'''
-
-# comparison to rpy2
-rdata = analytical_set[['pass','raingarden','n']]
-rdata['intercept'] = 1.0
-train_cols = rdata.columns[1:]
-logit = sm.Logit(data['pass'], rdata[train_cols])
-result = logit.fit()
-print result.summary()
-
-# extract summary object values ->
-# http://stackoverflow.com/questions/16110715/getting-part-of-r-object-from-python-using-rpy2
-print fit.names
-z1 = s.rx2('deviance')
-z2 = s.rx2('null.deviance')
-
 print '\n'
 print 'SQL evaluations:'
 print '================'
@@ -939,4 +758,6 @@ print 'ALL OUT:'
 #test.to_csv('test2.csv',sep='\t')
 #test = evaluations[['firstname','lastname','evaluator_id']]
 #print test
+
+
 
