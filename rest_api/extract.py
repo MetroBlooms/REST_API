@@ -72,6 +72,11 @@ import sys
 sys.path.append('absolute path to this file')
 sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
 
+---> to expose objects from this script:
+import sys
+sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
+from extract import *
+
 To print:
 python extract.py > out
 printed to PDF using postscript
@@ -390,12 +395,8 @@ mask = newframe.loc[idx[:,'count'],:] > 3
 idx1 = mask[mask.values].index.get_level_values('garden_id')
 print newframe.loc[idx[idx1,:],:]
 
-# http://stackoverflow.com/questions/22320356/pandas-get-values-from-column-that-appear-more-than-x-times
-import sys
-sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
-from extract import *
-
 # get number of evaluations per garden
+# http://stackoverflow.com/questions/22320356/pandas-get-values-from-column-that-appear-more-than-x-times
 test = evaluations[['garden_id', 'ratingyear', 'score', 'raingarden']]
 vc = test.garden_id.value_counts()
 #filter those with 6 evaluations
@@ -800,71 +801,93 @@ def isolate_and_plot(variable):
 import pandas.rpy.common as com
 from rpy2.robjects.packages import importr
 import rpy2.robjects as ro
+import rpy2.robjects.packages as rpy2o
+R = ro.r
+import rpy2.robjects.lib.ggplot2 as ggplot2
 
 r_analytical_set = com.convert_to_r_dataframe(analytical_set)
 print r_analytical_set
 print type(r_analytical_set)
 
-formula = 'pass ~ raingarden + n'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+formula = 'pass~n'
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
-formula = 'pass ~ raingarden'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+from rpy2.robjects import Formula, Vector
+rplot = R('plot')
+formula = Formula('pass~n')
+formula.getenvironment()['pass'] = r_analytical_set.rx2('pass')
+formula.getenvironment()['n'] = r_analytical_set.rx2('n')
+R.plot(formula, data=r_analytical_set, ylab = 'P(outcome =  1 | pass)', xlab = 'N: number of times evaluated', xaxp = R.c(0, 5, 10))
+
+with open('/Users/gregsilverman//development/python/rest_api/rest_api/utils.r', 'r') as f:
+    string = f.read()
+
+from rpy2.robjects.packages import STAP
+invlogit = STAP(string, "invlogit")
+
+from rpy2.robjects.vectors import FloatVector
+
+#c1 = R.curve(invlogit(R.coef(fit)[0] + R.coef(fit)[1]*R.x), add = True)
+#R(c1)
+'''
+formula = 'pass ~ raingarden + n'
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n + factor(es_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n + factor(me_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n + factor(pv_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 
 formula = 'pass ~ raingarden + n + factor(me_score) + factor(pv_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n + factor(me_score) + factor(es_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n + factor(pv_score) + factor(es_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
 
 formula = 'pass ~ raingarden + n + factor(me_score) + factor(pv_score) + factor(es_score)'
-fit = ro.r.glm(formula=ro.r(formula), data=r_analytical_set,   family=ro.r('binomial(link="logit")'))
-s = ro.r.summary(fit)
+fit = R.glm(formula=R(formula), data=r_analytical_set,   family=R('binomial(link="logit")'))
+s = R.summary(fit)
 print(fit)
-print(ro.r.summary(fit))
+print(R.summary(fit))
+'''
 
 # comparison to rpy2
 rdata = analytical_set[['pass','raingarden','n']]
@@ -879,11 +902,6 @@ print result.summary()
 print fit.names
 z1 = s.rx2('deviance')
 z2 = s.rx2('null.deviance')
-
-
-
-
-
 
 print '\n'
 print 'SQL evaluations:'

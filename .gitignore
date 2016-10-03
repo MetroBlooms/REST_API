@@ -4,3 +4,8 @@
 .idea/*
 rest_api/venv/*
 rest_api/config.py
+*.pdf
+out*
+.idea
+*.ipynb
+*.csv
