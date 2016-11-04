@@ -16,6 +16,13 @@ print len(evals)
 
 table = pd.DataFrame(evals)
 count = table.garden_id.nunique()
+
+"""
+To print:
+python extract.py > out
+printed to PDF using postscript
+"""
+
 '''
 sites[(~sites.city.str.lower().str.contains('minnea')) &
             (~sites.city.str.lower().str.contains('mpls')) &
