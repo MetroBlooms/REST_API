@@ -18,13 +18,13 @@ requests
 py2neo
 neomodel
 wtforms
+cython
 pandas
 phpserialize
 simplejson
 numexpr
 scikit-learn
 tabulate
-uwsgi
 statsmodels
-pylab
 rpy2
+ipython[all]
