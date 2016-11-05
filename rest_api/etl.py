@@ -29,7 +29,7 @@ Evaluation = models.Evaluation
 Person = models.Person
 
 """
-ETL module for creating and analytical dataframe from MEtroBloom evaluation data
+ETL module for creating an analytical dataframe from MetroBlooms evaluation data
 
 To run from interpreter you must first issue the commands:
 
@@ -40,7 +40,7 @@ sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
 ---> to expose objects from this script:
 import sys
 sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
-from extract import *
+from etl import *
 
 SQL Query:
 ---------
