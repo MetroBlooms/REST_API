@@ -104,9 +104,7 @@ qEvaluations = db.session.query(Site.address,
     outerjoin(Geoposition, Geoposition.geo_id == Site.geo_id). \
     filter(and_(Evaluation.completed == 1,
                 Evaluation.scoresheet != None,
-                #Site.raingarden == 1,
                 Evaluation.score.isnot(None)))
-#Evaluation.ratingyear == 2015))
 
 '''
 qEvaluations = db.session.query(Site.address,
@@ -162,31 +160,17 @@ qSites = db.session.query(Site.garden_id,
 """
 
 # get php array object of scoresheets as list of dictionaries
-#evals = []
-#for result in qEvaluations:
-#            data = {'garden_id': result.garden_id,
-#                    'ratingyear': result.ratingyear,
-#                    'scoresheet': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
-
-#            evals.append(data)
-
 
 evals = [{'garden_id': result.garden_id,
           'ratingyear': result.ratingyear,
           'scoresheet': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
          for result in qEvaluations]
 
-#print 'data:'
-#print evals
-#print len(evals)
 
 table = pd.DataFrame(evals)
-#count = table.garden_id.nunique()
 
 # Pandas dataframe nourished by consuming SQLAlchemy object:
 
-#evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind, columns = list('raingardenratingyear'))
-#sites = pd.read_sql(qSites.statement, qSites.session.bind, columns = list('raingardenratingyear'))
 evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind, columns = list('raingardenratingyear'))
 sites = pd.read_sql(qSites.statement, qSites.session.bind, columns = list('raingardenratingyear'))
 
@@ -204,16 +188,10 @@ vc = evaluations_sub.garden_id.value_counts()
 
 #filter those with 6 evaluations:
 
-#df = test[test['garden_id'].isin(vc[vc >= 4].index.values)]
-#df.values.T.tolist()
-
 # need to filter out to only one garden per year
 # http://stackoverflow.com/questions/17995024/how-to-assign-a-name-to-the-a-size-column
 # issue with "A value is trying to be set on a copy of a slice from a DataFrame."
 # method with reset_index preferred, since it does not work on a copy of the object
-#df['n'] = df.groupby(['garden_id','ratingyear']).transform(np.size)
-#t = test
-#u = df[df['size'] > 1].garden_id
 
 
 # set of garden_id had more than one evaluation:
@@ -230,8 +208,6 @@ d = evaluations_sub[evaluations_sub['garden_id'].isin(c)].replace({True: 1, Fals
 
 # add count of evaluations per garden_id:
 
-# e = test.groupby(['garden_id']).size().to_frame(name = 'n').reset_index()
-
 # see http://stackoverflow.com/questions/25119524/pandas-conditional-rolling-count
 def rolling_count(val):
     if val == rolling_count.previous:
@@ -243,61 +219,30 @@ def rolling_count(val):
 rolling_count.count = 0 #static variable
 rolling_count.previous = None #static variable
 
-#e = pd.DataFrame(d)
 d['n'] = d['garden_id'].apply(rolling_count)
-
-
-#d = pd.merge(e, d, on = ('garden_id'), how = 'inner')
-# Issue wrt python shell: http://github.com/mwaskom/seaborn/issues/231
-#import matplotlib
-#matplotlib.use('TkAgg')
-
-# write df elements to list for plotting
-#garden_id = d.values.T.tolist()[0]
-#ratingyear = d.values.T.tolist()[1]
-#score = d.values.T.tolist()[2]
-#raingarden = d.values.T.tolist()[3]
-#n = d.values.T.tolist()[4]
 
 # list of column names:
 header = list(d.columns.values)
 
-#for x in xrange(0, len(test)):
-#    test[x] = d.values.T.tolist()[x]
-
 # get list of lists with all data
 data = [d.values.T.tolist()[x] for x in xrange(0, len(header))]
-
-#test_dict = {test_vals[0]: test[0], test_vals[1]: test[1], test_vals[2]: test[2], test_vals[3]: test[3], test_vals[4]: test[4] }
 
 # create dictionary with header as key:
 data_dict =  {header[x]: data[x] for x in xrange(0, len(header))}
 
-#df = pd.DataFrame(dict(ratingyear = ratingyear, score = score, garden_id = garden_id, raingarden = raingarden, n = n))
 
 # write to dataframe:
 df = pd.DataFrame(data_dict)
 
-#df['score'] = df['score'].astype(int)
-#df['garden_id'] = df['garden_id'].astype(int)
-#df['raingarden'] = df['raingarden'].astype(int)
-#df['n'] = df['n'].astype(int)
-#df['score'] = df['score'].astype(int)
-#df['ratingyear'] = df['ratingyear'].astype(int)
-
 def set_type(col, type, obj):
     """set column data type"""
     obj[col] = obj[col].astype(type)
-
-# TODO: use test_vals
-#df_col = ['score', 'garden_id', 'raingarden', 'n', 'score', 'ratingyear']
 
 # set column data type:
 map(set_type, header, repeat('int', len(header)), repeat(df, len(header)))
 
 # add scoresheet data from evals record set
 f = pd.merge(table, d, on = ('garden_id', 'ratingyear'), how = 'inner')
-# f.to_dict()['scoresheet']
 
 def mk_dict(col, df):
     """df -> dictionary"""
@@ -305,13 +250,11 @@ def mk_dict(col, df):
 
 keyed_items = ['ratingyear', 'garden_id', 'scoresheet']
 
-#ratingyear = map(mk_dict, keyed_items[0], repeat(f, len(keyed_items[0:1])))
 
 # Untangle php scoresheet object
 # group by scoresheet value: http://stackoverflow.com/questions/39029939/how-to-best-extract-sub-dictionaries-by-value-in-this-object
 # get dictionary with scoresheet
 horrible_mess = mk_dict(keyed_items[2], f)
-#horrible_mess = f.to_dict()['scoresheet']
 
 # remap dictionary with id as key:
 # literal_eval evaluates the statement and raises an exception if not a valid Python datatype
@@ -325,12 +268,6 @@ for k, v in still_messy.iteritems():
         v1['id'] = k
         # group by key -> id
         grouped[v1['0']].append(v1)
-
-#grouped['visual_appeal']
-#grouped['visual_impact']
-#grouped['environmental_stewardship']
-
-#print len(test3[(test3.raingarden == 1)].groupby(['garden_id']).count())
 
 # Remap scoresheet category values accordingly
 
@@ -385,11 +322,6 @@ df_idx = map(set_df_id, categories, repeat('id', len(categories)))
 # get category names:
 for x in range(len(cat_names)):
     cat_names[x] = df_idx[x]
-#cat_names
-
-#[cat_names[x] == df[x] for x in cat_names]
-
-#cat_names[x] = df[x for x in range(len(cat_names)]
 
 # remap column names:
 [x.rename(columns={'0': 'category', '1': 'score'}, inplace=True) for x in cat_names]
@@ -400,29 +332,7 @@ di =[{'visual_appeal': 'visual_impact'},
      {'use_of_color': 'visual_impact'},
      {'color': 'visual_impact'}]
 
-# def remap_cat(di, df):
-#    x = df['category'].replace(di, inplace=True)
-#    return x
-
-
 #search for value in df
-
-#for i in range(0, len(cat_names)):
-#    if len(cat_names[i][cat_names[i]['category'] == 'visual_impact']) > 0:
-#        print di[i]
-
-#for i in xrange(0, len(cat_names)):
-#    for j in xrange(0, len(di)):
-#        if len(cat_names[i][cat_names[i]['category'] == di[j].keys()[0]]) > 0:
-#            print '{}{}'.format(di[j], j)
-
-
-#for x in cat_names:
-#    for y in di:
-#        if len(x[x['category'] == y.keys()[0]]) > 0:
-#            x['category'].replace(y, inplace=True)
-#            print y
-#            print x
 
 # use nested comprehension to rename categories accordingly to dictionary:
 [x['category'].replace(y, inplace=True) for x in cat_names for y in di if len(x[x['category'] == y.keys()[0]]) > 0]
@@ -432,24 +342,11 @@ result = pd.concat(cat_names)
 
 # add joinable column:
 result['id'] = result.index
+
 # create data frames with missing dual keyed variables that map to index:
-
-#def mk_dict(col, df):
-#    return df.to_dict()[col]
-
-#keyed_items = ['ratingyear', 'garden_id']
-
-#ratingyear = map(mk_dict, keyed_items[0], repeat(f, len(keyed_items[0:1])))
 
 # dictionary of key by id and value of ratingyear:
 ratingyear = mk_dict(keyed_items[0], f)
-
-#ratingyear = f.to_dict()['ratingyear']
-#out = []
-#for k, v in ratingyear.items():
-# for k, v in map(mk_dict, repeat('ratingyear', len(f)), repeat(f, len(f))).items():
-#    kv = {'id': k, 'ratingyear': v}
-#    out.append(kv)
 
 # make list of dictionaries:
 out = [{'id': k, keyed_items[0]: v} for k, v in ratingyear.iteritems()]
@@ -457,17 +354,8 @@ out = [{'id': k, keyed_items[0]: v} for k, v in ratingyear.iteritems()]
 # list of dictionaries -> df:
 ratingyear = pd.DataFrame(out)
 
-#garden_id = f.to_dict()['garden_id']
-#garden_id = map(mk_dict, repeat('garden_id', len(f)), repeat(f, len(f)))
-
 # dictionary of key by id and value of garden_id:
 garden_id = mk_dict(keyed_items[1], f)
-
-#out = []
-#for k, v in garden_id.items():
-#for k, v in map(mk_dict, repeat('garden_id', len(f)), repeat(f, len(f))).items():
-#    kv = {'id': k, 'garden_id': v}
-#    out.append(kv)
 
 # make list of dictionaries:
 out = [{'id': k, keyed_items[1]: v} for k, v in garden_id.iteritems()]
@@ -491,12 +379,6 @@ final_filtered = final[~final['garden_id'].isin(final[final['category'] == 'loca
 header = ['score']
 map(set_type, header, repeat('int', len(header)), repeat(final_filtered, len(header)))
 
-#es = final_filtered[final_filtered['category'] == 'environmental_stewardship']
-#me = final_filtered[final_filtered['category'] == 'maintenance']
-#dn = final_filtered[final_filtered['category'] == 'design']
-#vi = final_filtered[final_filtered['category'] == 'visual_impact']
-#pv = final_filtered[final_filtered['category'] == 'plant_variety_and_health']
-
 filter_col = ['environmental_stewardship',
               'maintenance',
               'design',
@@ -505,14 +387,6 @@ filter_col = ['environmental_stewardship',
 
 # single column scorecard by category:
 scorecard_categories = [final_filtered[final_filtered['category'] == x] for x in filter_col if len(final_filtered[final_filtered['category'] == x]) > 0]
-
-# ????? not sure what this was supposed to do
-#df1 = df[~df['garden_id'].isin(final[final['category'] == 'location'].garden_id)]
-
-# prelim stuff
-
-# n gardens with 7 evaluations, 1 per year
-#final_filtered.groupby('garden_id').count()
 
 
 # change data layout to multi-columns from single column:
@@ -526,33 +400,8 @@ for i in xrange(0, len(scorecard_categories)):
     scorecard_categories[i].rename(columns=lambda x: x.replace('score', category_score_prefix[i] + '_score'), inplace=True)
 
 
-#dn = dn[['garden_id', 'ratingyear', 'score']]
-#dn.columns = ['garden_id', 'ratingyear', 'dn_score']
-
-#es = es[['garden_id', 'ratingyear', 'score']]
-#es.columns = ['garden_id', 'ratingyear', 'es_score']
-
-#me = me[['garden_id', 'ratingyear', 'score']]
-#me.columns = ['garden_id', 'ratingyear', 'me_score']
-
-#pv = pv[['garden_id', 'ratingyear', 'score']]
-#pv.columns = ['garden_id', 'ratingyear', 'pv_score']
-
-#vi = vi[['garden_id', 'ratingyear', 'score']]
-#vi.columns = ['garden_id', 'ratingyear', 'vi_score']
-
 # http://stackoverflow.com/questions/23668427/pandas-joining-multiple-dataframes-on-columns/23671390#23671390
 scorecard = reduce(lambda left,right: pd.merge(left, right, how='inner', on=('garden_id', 'ratingyear')), scorecard_categories)
-
-#scorecard = pd.merge(dn, es, on = ('garden_id', 'ratingyear'), how = 'inner')
-#scorecard = pd.merge(scorecard, me, on = ('garden_id', 'ratingyear'), how = 'inner')
-#scorecard = pd.merge(scorecard, pv, on = ('garden_id', 'ratingyear'), how = 'inner')
-#scorecard = pd.merge(scorecard, vi, on = ('garden_id', 'ratingyear'), how = 'inner')
-# covariate matrix by garden
-#scorecard[['garden_id', 'dn_score', 'es_score', 'me_score', 'pv_score', 'vi_score']].groupby('garden_id').describe()
-
-# covariate matrix across all evaluations
-#scorecard[['dn_score', 'es_score', 'me_score', 'pv_score', 'vi_score']].describe()
 
 # Add total score as remapped category of pass/fail
 
@@ -566,12 +415,6 @@ df['pass'][well_maintained] = 1
 
 # merge with categorical scores:
 analytical_set = pd.merge(df, scorecard, on = ('garden_id', 'ratingyear'), how = 'inner')
-#analytical_set['score'] = analytical_set['score'].astype(int)
-#analytical_set['raingarden'] = analytical_set['raingarden'].astype(int)
-#analytical_set['ratingyear'] = analytical_set['ratingyear'].astype(int)
-#analytical_set['garden_id'] = analytical_set['garden_id'].astype(int)
-#analytical_set['n'] = analytical_set['n'].astype(int)
-
 
 header = ['score', 'raingarden', 'ratingyear', 'garden_id', 'n']
 
