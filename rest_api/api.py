@@ -11,7 +11,8 @@ from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 # test
 
 # load extensions
-from  app import app, db, sql_models as models
+#from  app import app, db, mb_models as models
+from  app import app, s, sql_models as models
 from flask_cors import cross_origin
 
 
@@ -22,11 +23,10 @@ auth = HTTPBasicAuth()
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
-Address = models.Address
+#Address = models.Address
 Site = models.Site
 Geoposition = models.Geoposition
 Evaluation = models.Evaluation
-Person = models.Person
 
 mode = 'test' # live or test for use in debugging
 
@@ -58,8 +58,10 @@ def new_user():
         abort(400)    # existing user
     user = User(username=username)
     user.hash_password(password)
-    db.session.add(user)
-    db.session.commit()
+    #db.session.add(user)
+    #db.session.commit()
+    s.add(user)
+    s.commit()
     return (jsonify({'username': user.username}), 201,
             {'Location': url_for('get_user', id=user.id, _external=True)})
 
@@ -145,12 +147,20 @@ def get_resource():
         print 'comments:'
         print evaluation["comments"]
 
+    '''
     db.session.add(a)
     db.session.add(g)
     db.session.add(p)
     db.session.add(e)
     db.session.add(s)
     db.session.commit()
+    '''
+    s.add(a)
+    s.add(g)
+    s.add(p)
+    s.add(e)
+    s.add(s)
+    s.commit()
 
     #if mode == 'test':
         #print s.address.count(address) # 1
@@ -271,7 +281,8 @@ def get_factor():
 
 # test JSON for use in APIs
 def results():
-    results = db.session.query(Person).\
+    #results = db.session.query(Person).\
+    results = s.query(Person).\
         join(User, User.person_id==Person.id).\
         join(Evaluation, Evaluation.evaluator_id==Person.id)
 

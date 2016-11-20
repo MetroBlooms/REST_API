@@ -15,8 +15,11 @@ from collections import defaultdict
 from itertools import repeat
 import time
 
-import mb_models as models
-from mb_models import db
+import sql_models as models
+#from mb_models import db
+
+from app import s
+
 # disable warnings "A value is trying to be set on a copy of a slice from a DataFrame..."
 pd.options.mode.chained_assignment = None
 
@@ -78,7 +81,8 @@ start = time.time()
 """EXTRACT DATA"""
 
 # SQLAlchemy object -> Evaluation of a site
-qEvaluations = db.session.query(Site.address,
+#qEvaluations = db.session.query(Site.address,
+qEvaluations = s.query(Site.address,
                                 Site.city,
                                 Site.zip,
                                 Site.neighborhood,
@@ -132,7 +136,8 @@ qEvaluations = db.session.query(Site.address,
 '''
 
 # SQLAlchemy object -> site specific data
-qSites = db.session.query(Site.garden_id,
+#qSites = db.session.query(Site.garden_id,
+qSites = s.query(Site.garden_id,
                          Site.address,
                          Site.city,
                          Site.zip,
@@ -268,6 +273,7 @@ for k, v in still_messy.iteritems():
         v1['id'] = k
         # group by key -> id
         grouped[v1['0']].append(v1)
+
 
 # Remap scoresheet category values accordingly
 
