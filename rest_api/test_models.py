@@ -1,4 +1,3 @@
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, backref
 from flask_login import LoginManager, UserMixin, login_required
 from sqlalchemy import (
@@ -15,17 +14,13 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 from passlib.apps import custom_app_context as pwd_context
-from  app import app, db
+from  app import app, Base
 
-Base = declarative_base()
-Base.metadata.bind = db.engine
-
-
-class User(db.Model, UserMixin):
+class User(Base, UserMixin):
     __tablename__ = 'user'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(32), index=True)
-    password_hash = db.Column(db.String(128))
+    id = Column(Integer, primary_key=True)
+    username = Column(String(32), index=True)
+    password_hash = Column(String(128))
     person_id = Column(Integer, ForeignKey('person.id'))
     person = relationship("Person", backref=backref("user", uselist=False))
  #   roles = relationship("Role", secondary=lambda: user_roles, backref="user")
@@ -71,7 +66,7 @@ class User(db.Model, UserMixin):
         return '<User %r>' % (self.username)
 
 
-class Address(db.Model):
+class Address(Base):
     __tablename__ = 'address'
     id = Column(Integer, primary_key=True, autoincrement=True)
     address = Column(String(80))
@@ -83,7 +78,7 @@ class Address(db.Model):
     #site_id = Column(Integer, ForeignKey('site.id'))
 
 
-class Geoposition(db.Model):
+class Geoposition(Base):
     __tablename__ = 'geoposition'
     id = Column(Integer, primary_key=True, autoincrement=True)
     latitude = Column(Float(20))
@@ -92,7 +87,7 @@ class Geoposition(db.Model):
     timestamp = Column(DateTime)
     #site_id = Column(Integer, ForeignKey('site.id'))
 
-class Site(db.Model):
+class Site(Base):
     __tablename__ = 'site'
     id = Column(Integer, primary_key=True, autoincrement=True)
     site_name  = Column(String(80))# does site have a formal name
@@ -104,18 +99,18 @@ class Site(db.Model):
     site_maintainers = relationship("SiteMaintainer", backref="site")
 
 
-class Evaluation(db.Model):
+class Evaluation(Base):
     __tablename__ = 'evaluation'
     id  = Column(Integer, primary_key=True, autoincrement=True)
     evaluator_id = Column(Integer, ForeignKey('person.id'))
     evaluator = relationship("Person", backref=backref("evaluation", uselist=False))
     evaluated_when = Column(DateTime)
-    exists = Column(Boolean)# does site exist at time of evaluation
+    exist = Column(Boolean)# does site exist at time of evaluation
     comments = Column(String(80))
     site_id = Column(Integer, ForeignKey('site.id'))
 
 
-class Person(db.Model):
+class Person(Base):
     __tablename__ = 'person'
     id = Column(Integer, primary_key=True, autoincrement=True)
     first_name = Column(String(20))
@@ -130,7 +125,7 @@ class Person(db.Model):
     type = Column(Enum("evaluator", "site maintainer", name="person_types"))
 
 
-class SiteMaintainer(db.Model):
+class SiteMaintainer(Base):
     __tablename__ = 'site_maintainer'
     id = Column(Integer, primary_key=True, autoincrement=True)
     site_id = Column(Integer, ForeignKey('site.id'))
@@ -138,21 +133,21 @@ class SiteMaintainer(db.Model):
     person = relationship("Person", backref=backref("site_maintainer", uselist=False))
 
 
-class Phone(db.Model):
+class Phone(Base):
     __tablename__ = 'phone'
     id = Column(Integer, primary_key=True, autoincrement=True)
     exchange = Column(String(10))
     type = Column(Enum("mobile", "business", "home", name = "phone_types"))
 
 
-class Email(db.Model):
+class Email(Base):
     __tablename__ = 'email'
     id = Column(Integer, primary_key=True, autoincrement=True)
     address = Column(String(80))# need validator
 
 
 # evaluation instrument items
-class Factor(db.Model):
+class Factor(Base):
     __tablename__ = 'factor'
     id = Column(Integer, primary_key=True, autoincrement=True)
     type = Column(Enum("garden", "rain garden", "permeable pavers", name = "evaluation_types"))

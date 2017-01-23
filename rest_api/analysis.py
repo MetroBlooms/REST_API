@@ -198,13 +198,8 @@ summary.groupby('garden_id').describe()
 
 # as per http://blog.yhat.com/posts/logistic-regression-and-python.html
 
-analytical_set.describe()
-pd.crosstab(analytical_set['pass'], analytical_set['es_score'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['me_score'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['pv_score'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['raingarden'], rownames=['pass'])
-pd.crosstab(analytical_set['pass'], analytical_set['n'], rownames=['pass'])
-analytical_set[['es_score', 'me_score', 'pv_score', 'vi_score', 'dn_score', 'score', 'raingarden', 'n', 'pass']].hist()
+
+
 
 dummy_es = pd.get_dummies(analytical_set['es_score'], prefix='es')
 dummy_es.head()
@@ -294,8 +289,11 @@ def isolate_and_plot(variable):
 #isolate_and_plot('pv_score')
 #isolate_and_plot('es_score')
 
-# move analysis over to R
+#move analysis over to R
 #import pandas.rpy.common as com
+
+##### NEW!!!!! #####
+
 from rpy2.robjects import pandas2ri
 import rpy2.robjects as ro
 R = ro.r
@@ -307,6 +305,58 @@ print type(r_analytical_set)
 
 # get summary
 print R.table(r_analytical_set.rx('pass'))
+print R.table(r_analytical_set.rx('raingarden'))
+print R.table(r_analytical_set.rx('score'))
+print R.table(r_analytical_set.rx('es_score'))
+print R.table(r_analytical_set.rx('me_score'))
+print R.table(r_analytical_set.rx('dn_score'))
+print R.table(r_analytical_set.rx('vi_score'))
+print R.table(r_analytical_set.rx('pv_score'))
+
+# http://stackoverflow.com/questions/36582505/r-x-must-be-atomic-for-sort-list
+print R.table(R.unlist(r_analytical_set.rx('pass')), R.unlist(r_analytical_set.rx('raingarden')))
+
+print R.summary(r_analytical_set)
+
+# firgure out how to do in R
+analytical_set.describe()
+pd.crosstab(analytical_set['pass'], analytical_set['es_score'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['me_score'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['pv_score'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['raingarden'], rownames=['pass'])
+pd.crosstab(analytical_set['pass'], analytical_set['n'], rownames=['pass'])
+pd.crosstab(analytical_set['raingarden'], analytical_set['es_score'], rownames=['raingarden'])
+pd.crosstab(analytical_set['raingarden'], analytical_set['me_score'], rownames=['raingarden'])
+pd.crosstab(analytical_set['raingarden'], analytical_set['pv_score'], rownames=['raingarden'])
+pd.crosstab(analytical_set['raingarden'], analytical_set['raingarden'], rownames=['raingarden'])
+pd.crosstab(analytical_set['raingarden'], analytical_set['n'], rownames=['raingarden'])
+pd.crosstab(analytical_set['pass'], analytical_set['raingarden'], rownames=['pass'])
+
+import matplotlib
+matplotlib.use('TkAgg')
+
+# do in R? see http://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot
+analytical_set[['es_score', 'me_score', 'pv_score', 'vi_score', 'dn_score', 'score', 'raingarden', 'n', 'pass']].hist()
+
+import rpy2.robjects.lib.ggplot2 as ggplot2
+
+gp = ggplot2.ggplot(r_analytical_set)
+pp = gp + \
+     ggplot2.aes_string(x='factor(garden_id)', y='score') + \
+     ggplot2.geom_boxplot()
+
+pp.plot()
+
+pp = gp + \
+     ggplot2.aes_string(x='score') + \
+     ggplot2.geom_histogram()
+
+pp.plot()
+
+#### TODO: scatterplots? Other qualitative?
+
+
+# -----> logistic stuffs
 R('p <- 846/5062')
 R('odds <- p/(1 - p)')
 R('logit <- log(p/(1 - p))')

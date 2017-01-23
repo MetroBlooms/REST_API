@@ -75,7 +75,7 @@ class Evaluator(Base):
     evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer)
 
-
+'''
 class User(Base, UserMixin):
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
@@ -83,7 +83,7 @@ class User(Base, UserMixin):
     password_hash = Column(String(128))
     person_id = Column(Integer, ForeignKey('users.user_id'))
     person = relationship("Person", backref=backref("user", uselist=False))
- #   roles = relationship("Role", secondary=lambda: user_roles, backref="user")
+   roles = relationship("Role", secondary=lambda: user_roles, backref="user")
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
@@ -124,3 +124,15 @@ class User(Base, UserMixin):
 
     def __repr__(self):
         return '<User %r>' % (self.username)
+
+
+class Address(Base):
+    __tablename__ = 'address'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    address = Column(String(80))
+    city = Column(String(80))
+    state = Column(String(2))
+    zip = Column(String(5))
+    neighborhood =  Column(String(80))
+    county = Column(String(80))
+'''

@@ -419,12 +419,31 @@ df['pass'][well_maintained] = 1
 
 """LOAD DATA"""
 
-# merge with categorical scores:
+# merge with categorical scores to create analytical data set
 analytical_set = pd.merge(df, scorecard, on = ('garden_id', 'ratingyear'), how = 'inner')
 
 header = ['score', 'raingarden', 'ratingyear', 'garden_id', 'n']
 
 map(set_type, header, repeat('int', len(header)), repeat(analytical_set, len(header)))
+
+# data for db design usage
+cols_to_keep = ['garden_id',
+                'address',
+                'city',
+                'zip',
+                'neighborhood',
+                'latitude',
+                'longitude',
+                'accuracy']
+
+sites = sites[cols_to_keep]
+
+full_set = pd.merge(analytical_set, sites, how='left', on='garden_id')
+
+# write out data:
+
+analytical_set.to_csv('~/development/data/mb_analytical.csv')
+full_set.to_csv('~/development/data/mb_full.csv')
 
 elapsed = (time.time() - start)
 print 'Other calls time elapsed -> ' + str(elapsed)

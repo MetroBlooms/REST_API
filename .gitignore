@@ -5,6 +5,6 @@
 rest_api/venv/*
 *.pdf
 out*
-.idea
+.ideat
 *.ipynb
 *.csv
