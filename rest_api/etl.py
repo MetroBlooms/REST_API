@@ -3,7 +3,7 @@ import os
 import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
 
-from sqlalchemy.sql import and_, or_
+from sqlalchemy.sql import and_, or_, cast
 import pandas as pd
 pd.set_option('display.width', 1000)
 import numpy as np
@@ -30,6 +30,10 @@ Geoposition = models.Geoposition
 Evaluator = models.Evaluator
 Evaluation = models.Evaluation
 Person = models.Person
+Consultation = models.Consultation
+UserGarden = models.UserGarden
+RegisteredWorkshop = models.RegisteredWorkshop
+WorkshopSession = models.WorkshopSession
 
 """
 ETL module for creating an analytical dataframe from MetroBlooms evaluation data
@@ -148,6 +152,18 @@ qSites = s.query(Site.garden_id,
                          Site.raingarden).\
     outerjoin(Geoposition, Geoposition.geo_id == Site.geo_id)
 
+# SQLAlchemy object -> site consultation
+qConsultations = s.query(Consultation.user_id,
+                         Consultation.confirmed_date,
+                         UserGarden.garden_id).\
+    join(UserGarden, UserGarden.user_id == Consultation.user_id)
+
+# SQLAlchemy object -> workshop participant
+qWorkshops = s.query(RegisteredWorkshop.user_id,
+                     #WorkshopSession.session_date,
+                     UserGarden.garden_id).\
+    join(UserGarden, UserGarden.user_id == RegisteredWorkshop.user_id)#.\
+    #join(WorkshopSession, WorkshopSession.session_id == RegisteredWorkshop.session_id)
 
 """
     Criteria to restrict SQLA object. Instead, we grab whole dataset for use in manipulation in Pandas df:
@@ -165,19 +181,20 @@ qSites = s.query(Site.garden_id,
 """
 
 # get php array object of scoresheets as list of dictionaries
-
 evals = [{'garden_id': result.garden_id,
           'ratingyear': result.ratingyear,
           'scoresheet': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
          for result in qEvaluations]
 
 
-table = pd.DataFrame(evals)
+scoresheet = pd.DataFrame(evals)
 
-# Pandas dataframe nourished by consuming SQLAlchemy object:
+# Pandas dataframes nourished by consuming SQLAlchemy objects:
 
-evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind, columns = list('raingardenratingyear'))
-sites = pd.read_sql(qSites.statement, qSites.session.bind, columns = list('raingardenratingyear'))
+evaluations = pd.read_sql(qEvaluations.statement, qEvaluations.session.bind)#, columns = list('raingardenratingyear'))
+sites = pd.read_sql(qSites.statement, qSites.session.bind)#, columns = list('raingardenratingyear'))
+consults = pd.read_sql(qConsultations.statement, qConsultations.session.bind)#, columns = list('raingardenratingyear'))
+workshops = pd.read_sql(qWorkshops.statement, qWorkshops.session.bind)#, columns = list('raingardenratingyear'))
 
 elapsed = (time.time() - start)
 print 'Setup calls time elapsed -> ' + str(elapsed)
@@ -191,13 +208,10 @@ start = time.time()
 evaluations_sub = evaluations[['garden_id', 'ratingyear', 'score', 'raingarden']]
 vc = evaluations_sub.garden_id.value_counts()
 
-#filter those with 6 evaluations:
-
 # need to filter out to only one garden per year
 # http://stackoverflow.com/questions/17995024/how-to-assign-a-name-to-the-a-size-column
 # issue with "A value is trying to be set on a copy of a slice from a DataFrame."
 # method with reset_index preferred, since it does not work on a copy of the object
-
 
 # set of garden_id had more than one evaluation:
 a = vc[vc >= 1].index.values
@@ -212,7 +226,6 @@ c = np.setdiff1d(a, b)
 d = evaluations_sub[evaluations_sub['garden_id'].isin(c)].replace({True: 1, False: 0, None: 0})
 
 # add count of evaluations per garden_id:
-
 # see http://stackoverflow.com/questions/25119524/pandas-conditional-rolling-count
 def rolling_count(val):
     if val == rolling_count.previous:
@@ -235,29 +248,28 @@ data = [d.values.T.tolist()[x] for x in xrange(0, len(header))]
 # create dictionary with header as key:
 data_dict =  {header[x]: data[x] for x in xrange(0, len(header))}
 
-
 # write to dataframe:
-df = pd.DataFrame(data_dict)
+core_data = pd.DataFrame(data_dict)
 
 def set_type(col, type, obj):
     """set column data type"""
     obj[col] = obj[col].astype(type)
 
-# set column data type:
-map(set_type, header, repeat('int', len(header)), repeat(df, len(header)))
+# set df column data type:
+map(set_type, header, repeat('int', len(header)), repeat(core_data, len(header)))
 
 # add scoresheet data from evals record set
-f = pd.merge(table, d, on = ('garden_id', 'ratingyear'), how = 'inner')
+f = pd.merge(scoresheet, d, on = ('garden_id', 'ratingyear'), how = 'inner')
 
 def mk_dict(col, df):
     """df -> dictionary"""
     return df.to_dict()[col]
 
+# columns to map in dictionary
 keyed_items = ['ratingyear', 'garden_id', 'scoresheet']
 
-
-# Untangle php scoresheet object
-# group by scoresheet value: http://stackoverflow.com/questions/39029939/how-to-best-extract-sub-dictionaries-by-value-in-this-object
+# Untangle php scoresheet object mess; group by scoresheet value
+# see http://stackoverflow.com/questions/39029939/how-to-best-extract-sub-dictionaries-by-value-in-this-object
 # get dictionary with scoresheet
 horrible_mess = mk_dict(keyed_items[2], f)
 
@@ -274,11 +286,11 @@ for k, v in still_messy.iteritems():
         # group by key -> id
         grouped[v1['0']].append(v1)
 
-
 # Remap scoresheet category values accordingly
 
-# set index for dataframe with grouped category:
-def set_df_id(category, column):
+# set index for dataframe with grouped category,
+# return dataframe and use in list
+def set_id(category, column):
     """set index column for df"""
     x = pd.DataFrame(grouped[category]).set_index(column)
     return x
@@ -295,9 +307,12 @@ categories = ['visual_appeal',
               'maintenance',
               'environmental_stewardship']
 
-map(set_df_id, categories, repeat('id', len(categories)))
+#map(set_df_id, categories, repeat('id', len(categories)))
 
-# write to specific DF name: http://stackoverflow.com/questions/31432201/assign-dataframes-in-a-list-to-a-list-of-names-pandas
+# write to df using category as name
+# see: http://stackoverflow.com/questions/31432201/assign-dataframes-in-a-list-to-a-list-of-names-pandas
+
+# initialize:
 appeal,\
 impact,\
 plant_variety,\
@@ -322,31 +337,32 @@ cat_names = [appeal,
              maintenance,
              environmental_stewardship]
 
-# make indexed df:
-df_idx = map(set_df_id, categories, repeat('id', len(categories)))
+# make list of grouped categories from scorecards,
+# using returned df's id column as each list's  unique id column
+# to be used when ????
+cat_collection_idx = map(set_id, categories, repeat('id', len(categories)))
 
-# get category names:
+# assign newly indexed list to category named list
 for x in range(len(cat_names)):
-    cat_names[x] = df_idx[x]
+    cat_names[x] = cat_collection_idx[x]
 
-# remap column names:
+# remap df assigned column names accordingly:
 [x.rename(columns={'0': 'category', '1': 'score'}, inplace=True) for x in cat_names]
 
-# remap categories:
-di =[{'visual_appeal': 'visual_impact'},
+# dictionary to remap categories:
+cat_dict =[{'visual_appeal': 'visual_impact'},
      {'plant_variety': 'plant_variety_and_health'},
      {'use_of_color': 'visual_impact'},
      {'color': 'visual_impact'}]
 
-#search for value in df
-
 # use nested comprehension to rename categories accordingly to dictionary:
-[x['category'].replace(y, inplace=True) for x in cat_names for y in di if len(x[x['category'] == y.keys()[0]]) > 0]
+# condition for length greater than 0 means a match on the key exists
+[x['category'].replace(y, inplace=True) for x in cat_names for y in cat_dict if len(x[x['category'] == y.keys()[0]]) > 0]
 
-# once remapped -> concatenate:
+# once column names have been remapped we concatenate all lists:
 result = pd.concat(cat_names)
 
-# add joinable column:
+# add joinable column using index created in function set_id()
 result['id'] = result.index
 
 # create data frames with missing dual keyed variables that map to index:
@@ -369,10 +385,11 @@ out = [{'id': k, keyed_items[1]: v} for k, v in garden_id.iteritems()]
 # list of dictionaries -> df:
 garden_id = pd.DataFrame(out)
 
-# merge dual key:
+# merge dual key on id created in set_id():
 keyed_values = pd.merge(garden_id, ratingyear, on = ('id'), how = 'inner')
 
-# merge dual key with single column scoring:
+# merge dual key with single column scoring
+# to make df with list of all categories and respective scores
 final = pd.merge(keyed_values, result, on = ('id'), how = 'inner').\
     sort_values(by = ['garden_id','ratingyear', 'category'],  ascending = [True, True, True])
 
@@ -391,42 +408,52 @@ filter_col = ['environmental_stewardship',
               'visual_impact',
               'plant_variety_and_health']
 
-# single column scorecard by category:
+# make lsit of single column scorecard by category:
 scorecard_categories = [final_filtered[final_filtered['category'] == x] for x in filter_col if len(final_filtered[final_filtered['category'] == x]) > 0]
 
 
 # change data layout to multi-columns from single column:
 cols = ['garden_id', 'ratingyear', 'score']
+# in order of list of series
 category_score_prefix = ['es', 'me', 'dn', 'vi', 'pv']
 
-# first filter columns and then rename score column for each iterable df:
+# first filter columns and then rename score column for each iterable list of pd series:
 for i in xrange(0, len(scorecard_categories)):
     scorecard_categories[i] = scorecard_categories[i][cols]
-    # rename score column per scorecard category
+    # rename series score column per scorecard category
     scorecard_categories[i].rename(columns=lambda x: x.replace('score', category_score_prefix[i] + '_score'), inplace=True)
 
-
 # http://stackoverflow.com/questions/23668427/pandas-joining-multiple-dataframes-on-columns/23671390#23671390
+# transform list of series into dataframe via merge
 scorecard = reduce(lambda left,right: pd.merge(left, right, how='inner', on=('garden_id', 'ratingyear')), scorecard_categories)
 
 # Add total score as remapped category of pass/fail
 
 # set mask for pass/fail on overall score:
-well_maintained = (df['score'] > 8)
-df['pass'] = 0
+well_maintained = (core_data['score'] > 8)
+#df['pass'] = 0
 # update those that passed
-df['pass'][well_maintained] = 1
+#df['pass'][well_maintained] = 1
+
+core_data['pass'] = np.where(well_maintained, 1, 0)
 
 """LOAD DATA"""
 
-# merge with categorical scores to create analytical data set
-analytical_set = pd.merge(df, scorecard, on = ('garden_id', 'ratingyear'), how = 'inner')
+# merge core data with remapped categorical scores to create analytical data set
+analytical_set = pd.merge(core_data, scorecard, on = ('garden_id', 'ratingyear'), how = 'inner')
 
 header = ['score', 'raingarden', 'ratingyear', 'garden_id', 'n']
 
 map(set_type, header, repeat('int', len(header)), repeat(analytical_set, len(header)))
 
-# data for db design usage
+# set if garden_id was registered in workshop/consultation
+w_garden_id = set(workshops['garden_id'])
+c_garden_id = set(consults['garden_id'])
+
+analytical_set['workshop'] = np.where(analytical_set.garden_id.isin(w_garden_id), 1, 0)
+analytical_set['consult'] = np.where(analytical_set.garden_id.isin(c_garden_id), 1, 0)
+
+# site data for db design usage
 cols_to_keep = ['garden_id',
                 'address',
                 'city',
@@ -441,7 +468,6 @@ sites = sites[cols_to_keep]
 full_set = pd.merge(analytical_set, sites, how='left', on='garden_id')
 
 # write out data:
-
 analytical_set.to_csv('~/development/data/mb_analytical.csv')
 full_set.to_csv('~/development/data/mb_full.csv')
 

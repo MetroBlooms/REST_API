@@ -75,6 +75,41 @@ class Evaluator(Base):
     evaluator_id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer)
 
+#class Evaluator(db.Model):
+class UserGarden(Base):
+    __tablename__ = 'user_garden_match'
+    match_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer)
+    garden_id = Column(Integer)
+
+class RegisteredWorkshop(Base):
+    __tablename__ = 'registration'
+    registrant_id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(Integer)
+    user_id = Column(Integer)
+
+class WorkshopSession(Base):
+    __tablename__ = 'workshop_sessions'
+    session_id = Column(Integer, primary_key=True, autoincrement=True)
+    location_id = Column(Integer)
+    workshop_id = Column(Integer)
+    session_date = Column(Integer)
+
+class Workshop(Base):
+    __tablename__ = 'workshops'
+    workshop_id = Column(Integer, primary_key=True, autoincrement=True)
+    workshop_name = Column(String(80))
+
+class Consultation(Base):
+    __tablename__ = 'consultations'
+    consultation_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer)
+    lda_id = Column(Integer)
+    project = Column(String(80))
+    watershed_district = Column(String(80))
+    confirmed_date = Column(Integer)
+
+
 '''
 class User(Base, UserMixin):
     __tablename__ = 'user'
