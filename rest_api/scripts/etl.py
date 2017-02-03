@@ -15,15 +15,13 @@ from collections import defaultdict
 from itertools import repeat
 import time
 
-import sql_models as models
-#from mb_models import db
-
-from app import s
+import rest_api.sql_models as models
+from rest_api.app import s
 
 # disable warnings "A value is trying to be set on a copy of a slice from a DataFrame..."
 pd.options.mode.chained_assignment = None
 
-# Classes used in testing
+# classes used in processing
 Evaluation = models.Evaluation
 Site = models.Site
 Geoposition = models.Geoposition
@@ -36,56 +34,32 @@ RegisteredWorkshop = models.RegisteredWorkshop
 WorkshopSession = models.WorkshopSession
 
 """
-ETL module for creating an analytical dataframe from MetroBlooms evaluation data
+ETL module for creating an analytical and db dataframes from MetroBlooms evaluation data
 
 To run from interpreter you must first issue the commands:
 
 import sys
 sys.path.append('absolute path to this file')
-sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
+(E.g., sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api'))
 
 ---> to expose objects from this script:
 import sys
 sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
 from etl import *
 
-SQL Query:
----------
 
-use metroblo_website;
-
-select  latitude,
-    longitude,
-    accuracy,
-    address,
-    city,
-    zip,
-    raingarden,
-    scoresheet,
-    score,
-    eval_type,
-    rating,
-    comments,
-    date_evaluated
-from gardenevals_evaluations eval
-left evaluationser join (gardenevals_gardens garden, geolocation geo)
-on (garden.garden_id = eval.garden_id AND garden.geo_id = geo.geo_id)
-where completed = 1 AND scoresheet is not null
-
-
-raingarden designation:
-    Evaluation.eval_type = 'raingarden'
-    Site.raingarden = 1
-    Evaluation.comments search for raingarden
 """
-
-# SQLAlchemy query objects:
 start = time.time()
 
-"""EXTRACT DATA"""
+"""
+EXTRACT DATA
+
+
+SQL Query:
+---------
+"""
 
 # SQLAlchemy object -> Evaluation of a site
-#qEvaluations = db.session.query(Site.address,
 qEvaluations = s.query(Site.address,
                                 Site.city,
                                 Site.zip,
@@ -114,33 +88,7 @@ qEvaluations = s.query(Site.address,
                 Evaluation.scoresheet != None,
                 Evaluation.score.isnot(None)))
 
-'''
-qEvaluations = db.session.query(Site.address,
-                         Site.city,
-                         Site.zip,
-                         Site.neighborhood,
-                         Site.raingarden,
-                         Evaluation.evaluation_id,
-                         Evaluation.eval_type,
-                         Evaluation.garden_id,
-                         Evaluation.scoresheet,
-                         Evaluation.score,
-                         Evaluation.rating,
-                         Evaluation.ratingyear,
-                         Evaluation.comments,
-                         Evaluation.date_evaluated,
-                         Evaluation.evaluator_id).\
-    outerjoin(Evaluation, Site.garden_id == Evaluation.garden_id).\
-    filter(and_(Evaluation.completed == 1,
-                Evaluation.scoresheet != None,
-                or_(Site.raingarden == 1,
-                    Evaluation.eval_type == 'raingarden')))
-                #Evaluation.ratingyear == 2015))
-                #Person.firstname == None))
-'''
-
 # SQLAlchemy object -> site specific data
-#qSites = db.session.query(Site.garden_id,
 qSites = s.query(Site.garden_id,
                          Site.address,
                          Site.city,
@@ -175,17 +123,16 @@ qWorkshops = s.query(RegisteredWorkshop.user_id,
                 Geolocation.latitude > 0))
 
 
-# serialize SQLA query evaluations as list of dictionaries;
-# convert scoresheet from php array object to list of dictionaries
-
 """
 
 # get php array object of scoresheets as list of dictionaries
+# serialize SQLA query evaluations as list of dictionaries;
+# convert scoresheet from php array object to list of dictionaries
+# manipulate list of dictionaries as "horrible_mess"
 evals = [{'garden_id': result.garden_id,
           'ratingyear': result.ratingyear,
           'scoresheet': json.dumps(unserialize(result.scoresheet.replace(' ', '_').lower()))}
          for result in qEvaluations]
-
 
 scoresheet = pd.DataFrame(evals)
 
@@ -437,7 +384,12 @@ well_maintained = (core_data['score'] > 8)
 
 core_data['pass'] = np.where(well_maintained, 1, 0)
 
+elapsed = (time.time() - start)
+print 'Transform calls time elapsed -> ' + str(elapsed)
+
 """LOAD DATA"""
+
+start = time.time()
 
 # merge core data with remapped categorical scores to create analytical data set
 analytical_set = pd.merge(core_data, scorecard, on = ('garden_id', 'ratingyear'), how = 'inner')
@@ -472,4 +424,4 @@ analytical_set.to_csv('~/development/data/mb_analytical.csv')
 full_set.to_csv('~/development/data/mb_full.csv')
 
 elapsed = (time.time() - start)
-print 'Other calls time elapsed -> ' + str(elapsed)
+print 'Load calls time elapsed -> ' + str(elapsed)

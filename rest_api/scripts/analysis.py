@@ -1,6 +1,6 @@
 import sys
 sys.path.append('/Users/gregsilverman/development/python/rest_api/rest_api')
-from etl import *
+from rest_api.scripts.etl import *
 
 import tempfile
 os.environ['MPLCONFIGDIR'] = tempfile.mkdtemp()
@@ -294,8 +294,9 @@ def isolate_and_plot(variable):
 
 ##### NEW!!!!! #####
 
-from rpy2.robjects import pandas2ri
-import rpy2.robjects as ro
+from rest_api.scripts.rpy2 import pandas2ri
+from rest_api.scripts import rpy2 as ro
+
 R = ro.r
 pandas2ri.activate()
 
@@ -338,7 +339,7 @@ matplotlib.use('TkAgg')
 # do in R? see http://stackoverflow.com/questions/13035834/plot-every-column-in-a-data-frame-as-a-histogram-on-one-page-using-ggplot
 analytical_set[['es_score', 'me_score', 'pv_score', 'vi_score', 'dn_score', 'score', 'raingarden', 'n', 'pass']].hist()
 
-import rpy2.robjects.lib.ggplot2 as ggplot2
+import rest_api.scripts.rpy2.robjects.lib.ggplot2 as ggplot2
 
 gp = ggplot2.ggplot(r_analytical_set)
 pp = gp + \
@@ -365,13 +366,13 @@ R('invlogit(logit)')
 
 #formula = 'pass~n'
 
-from rpy2.robjects import Formula
+from rest_api.scripts.rpy2 import Formula
 formula = Formula('pass~n')
 formula.getenvironment()['pass'] = r_analytical_set.rx2('pass')
 formula.getenvironment()['n'] = r_analytical_set.rx2('n')
 
 #fit = R.glm(formula=formula, data=r_analytical_set,   family=R('binomial(link="logit")'))
-import rpy2.robjects.packages as rpacks
+import rest_api.scripts.rpy2.robjects.packages as rpacks
 stats = rpacks.importr("stats")
 fit = stats.glm(formula = formula,
                 family = stats.binomial(link = "logit"),
@@ -387,7 +388,7 @@ R.plot(formula,
        xlab = 'N: number of times evaluated',
        xaxp = R.c(0, 5, 10))
 #R.plot('''{0}, data={1}, ylab = "P(outcome =  1 | pass)", xlab = "N: number of times evaluated", xaxp = R.c(0, 5, 10)''').format(formula, r_analytical_set)
-
+t s
 #with open('/Users/gregsilverman//development/python/rest_api/rest_api/utils.r', 'r') as f:
 #    string = f.read()
 
