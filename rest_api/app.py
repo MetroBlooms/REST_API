@@ -9,7 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # Define Flask app
 app = Flask(__name__)
-app.config.from_object('config')
+app.config.from_pyfile('config.py')
 #app.config.from_object('config')
 #db = SQLAlchemy(app)
 
