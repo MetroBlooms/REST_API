@@ -17,6 +17,14 @@ itsdangerous
 requests
 py2neo
 neomodel
+wtforms
+cython
 pandas
 phpserialize
 simplejson
+numexpr
+scikit-learn
+tabulate
+statsmodels
+rpy2
+ipython[all]

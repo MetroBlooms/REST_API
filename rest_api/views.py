@@ -2,8 +2,9 @@
 #https://github.com/mrjoes/flask-admin/blob/master/examples/auth/app.py
 
 from flask import render_template, flash, redirect, session
-from flask.ext import login
-from app import app, db, sql_models
+import flask_login as login
+#from app import app, db, sql_models
+from app import app, s, sql_models
 from forms import LoginForm
 
 User = sql_models.User
@@ -17,7 +18,8 @@ def init_login():
     # Create user loader function
     @login_manager.user_loader
     def load_user(id):
-        return db.session.query(User).get(int(id))
+        #return db.session.query(User).get(int(id))
+        return s.query(User).get(int(id))
 
 # Initialize flask-login
 init_login()

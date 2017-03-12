@@ -1,7 +1,7 @@
 from fabric.api import *
 from contextlib import contextmanager
 
-env.directory = '~/development/python/rest-api/rest_apgit merge origin/branch-i-want-to-merge-fromi'
+env.directory = '~/development/python/rest_api/rest_api'
 env.activate = 'source ' + env.directory + '/venv/bin/activate' # use virtual environment to execute commands
 
 # set context manager to use virtualenv
@@ -13,6 +13,11 @@ def virtualenv():
 
 def call( cmd):
    local( cmd, shell="/bin/bash")
+
+def which():
+    with virtualenv():
+        call('which python')
+
 
 # set up environment prior to dev
 def prepare():

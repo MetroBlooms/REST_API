@@ -3,7 +3,7 @@
 # from https://github.com/miguelgrinberg/REST-auth/blob/master/api.py
 
 from flask import abort, request, jsonify, g, url_for, session
-from rest_api.forms import LoginForm
+from forms import LoginForm
 from htsql import HTSQL
 from htsql.core.fmt.emit import emit
 from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
@@ -11,7 +11,8 @@ from flask.ext.httpauth import HTTPBasicAuth, HTTPDigestAuth
 # test
 
 # load extensions
-from  app import app, db, sql_models as models
+#from  app import app, db, mb_models as models
+from  app import app, s, test_models as models
 from flask_cors import cross_origin
 
 
@@ -22,11 +23,11 @@ auth = HTTPBasicAuth()
 User = models.User
 Person = models.Person
 Evaluation = models.Evaluation
-Address = models.Address
+#Address = models.Address
 Site = models.Site
 Geoposition = models.Geoposition
 Evaluation = models.Evaluation
-Person = models.Person
+Address = models.Address
 
 mode = 'test' # live or test for use in debugging
 
@@ -58,8 +59,10 @@ def new_user():
         abort(400)    # existing user
     user = User(username=username)
     user.hash_password(password)
-    db.session.add(user)
-    db.session.commit()
+    #db.session.add(user)
+    #db.session.commit()
+    s.add(user)
+    s.commit()
     return (jsonify({'username': user.username}), 201,
             {'Location': url_for('get_user', id=user.id, _external=True)})
 
@@ -82,9 +85,19 @@ def get_auth_token():
 # Testing 1, 2, 3....
 
 # test Ajax
+'''
+curl -u gms:python -i -X POST http://127.0.0.1:5000/api/resource -H "Content-Type: application/json" -d '{ "site": { "id": "37251", "site_name": "TestSite 2", "address": {
+"address": "1235 Blaisdell Ave", "city": "Minneapolis", "state": "MN", "zip":
+"55456", "neighborhood": "Kingfield", "county": "Hennepin" }, "geolocation": {
+"latitude":  "41.6544", "longitude":  "73.3323", "accuracy": "46" }, "person":
+{ "type": "evaluator", "first_name": "you" }, "evaluation": { "comments":
+"Another test...", "exists": true } } }
+'
+'''
+
 @app.route('/api/resource', methods=['GET','POST','OPTIONS'])
 @cross_origin() # allow all origins all methods
-@auth.login_required
+#@auth.login_required
 def get_resource():
     # Get the parsed contents of the form data
     # submitted via Ajax request
@@ -120,10 +133,10 @@ def get_resource():
                type = person["type"])
 
     e = Evaluation(comments = evaluation["comments"],
-                   exists = evaluation["exists"],
+                   exist = evaluation["exists"],
                    evaluator = p)
 
-    s = Site(site_name=site["site_name"],
+    st = Site(site_name=site["site_name"],
              address = a,
              geoposition = g,
              evaluations = [e])
@@ -145,12 +158,13 @@ def get_resource():
         print 'comments:'
         print evaluation["comments"]
 
-    db.session.add(a)
-    db.session.add(g)
-    db.session.add(p)
-    db.session.add(e)
-    db.session.add(s)
-    db.session.commit()
+    s.add(a)
+    s.add(g)
+    s.add(p)
+    s.add(e)
+    s.add(st)
+    s.commit()
+
 
     #if mode == 'test':
         #print s.address.count(address) # 1
@@ -170,14 +184,14 @@ def get_resource():
 def get_htsql():
     #if mode == 'test':
     #    print criterion
-    #test = HTSQL("mysql://gms:test@localhost/test")
-    test = HTSQL("pgsql://test:test@localhost/test")
+    test = HTSQL("mysql://gms:test123@localhost/test")
+    #test = HTSQL("pgsql://test:test@localhost/test")
     #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
     #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
 
     #test = HTSQL("mysql://gms:test@localhost/test")
+    #rows = test.produce("/evaluation{site{geoposition},evaluator}")
     rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
-    # rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}")
 
 # http://127.0.0.1:8080/evaluation{comments,site{geoposition{id}?latitude=46&longitude%3E47},site{geoposition{accuracy}?latitude=46&longitude%3E47},evaluator{first_name}}?evaluator.first_name='you'/:sql
 # http://127.0.0.1:8080/site{site_name :as location, count(evaluation) :as 'N visits'}
@@ -234,22 +248,6 @@ def get_htsql():
 
     return text
 
-# test nested data
-@app.route('/api/nested/', methods=['GET','POST','OPTIONS'])
-@cross_origin() # allow all origins all methods
-#@auth.login_required
-def get_nested():
-    test = HTSQL("mysql://nester:nesting@localhost/nestedsetspoc")
-    #rows = test.produce("/evaluation{*,site{*,address,geoposition},evaluator}?" + criterion)
-    rows = test.produce("/clinical_data{id, patient_sid :as sid,string_value :as value,attribute{attribute_value}}")
-    # rows = test.produce("/attribute{attribute_value, clinical_data{patient_sid :as sid,string_value :as value}}")
-
-    with test:
-        text = ''.join(emit('x-htsql/json', rows))
-
-    #print text, rows
-    return text
-
 
 # test HTSQL with REST proxy call
 @app.route('/api/factor', methods=['GET','POST','OPTIONS'])
@@ -271,9 +269,10 @@ def get_factor():
 
 # test JSON for use in APIs
 def results():
-    results = db.session.query(Person).\
-        join(User, User.person_id==Person.id).\
-        join(Evaluation, Evaluation.evaluator_id==Person.id)
+    #results = db.session.query(Person).\
+    results = s.query(Person).\
+        join(User, User.person_id==Person.user_id).\
+        join(Evaluation, Evaluation.evaluator_id==Person.user_id)
 
     json_results = []
 
