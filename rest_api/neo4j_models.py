@@ -8,6 +8,11 @@ from neomodel import (StructuredNode, StringProperty, IntegerProperty,
     RelationshipTo, RelationshipFrom)
 
 #neomodel test
+class Neighborhood(StructuredNode):
+    name=StringProperty(unique_index=False,required=False)
+
+    address = RelationshipFrom('Address', 'LOCATED_IN')
+
 class ScoreCard(StructuredNode):
     factor_type = StringProperty(unique_index=False, required=True)#("garden", "rain garden", "permeable pavers")
     score = IntegerProperty(unique_index=False, required=True)
